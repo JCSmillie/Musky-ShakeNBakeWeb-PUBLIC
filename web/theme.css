@@ -1,0 +1,177 @@
+/* =======================================
+   Base Layout
+======================================= */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.content {
+  display: flex;
+  flex: 1;
+}
+
+.main {
+  flex: 1;
+  padding: 20px;
+}
+
+.sidebar {
+  width: 300px;
+  padding: 20px;
+  border-left: 1px solid #ccc;
+}
+
+.theme-switcher {
+  margin: 10px;
+  text-align: right;
+}
+
+.corner-image {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  width: 100px;
+}
+
+/* =======================================
+   Theme Backgrounds
+======================================= */
+body.light-mode {
+  background-color: #f9f9f9;
+  color: #000;
+}
+
+body.dark-mode {
+  background-color: #121212;
+  color: #eee;
+}
+
+body.musky-mode {
+  background-color: #d0f5d0;
+  color: #054905;
+}
+
+body.gator-time-mode {
+  background-color: #000000;
+  color: #C5B358;
+}
+
+/* =======================================
+   Sidebar Backgrounds Per Theme
+======================================= */
+.light-mode .sidebar {
+  background-color: #f1f1f1;
+}
+
+.dark-mode .sidebar {
+  background-color: #2b2b2b;
+}
+
+.musky-mode .sidebar {
+  background-color: #c0eec0;
+}
+
+.gator-time-mode .sidebar {
+  background-color: #111111;
+}
+
+/* =======================================
+   Buttons (Action and Theme)
+======================================= */
+.action-button, .theme-button {
+  display: block;
+  width: 100%;
+  margin: 10px 0;
+  padding: 10px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s;
+}
+
+.action-button:hover, .theme-button:hover {
+  background-color: #45a049;
+}
+
+/* Special coloring for Gator Time mode buttons */
+.gator-time-mode .action-button, .gator-time-mode .theme-button {
+  background-color: #C5B358;
+  color: #000000;
+}
+
+.gator-time-mode .action-button:hover, .gator-time-mode .theme-button:hover {
+  background-color: #b8a647;
+}
+
+/* Orange Disabled Button */
+.orange-button {
+  background-color: orange;
+  color: white;
+  cursor: not-allowed;
+}
+
+/* =======================================
+   Debug Pane and Output Styling
+======================================= */
+pre {
+  background: #fff;
+  border: 1px solid #ddd;
+  padding: 15px;
+  white-space: pre-wrap;
+  border-radius: 5px;
+  overflow-x: auto;
+}
+
+.dark-mode pre {
+  background-color: #1e1e1e;
+  color: #ccc;
+  border-color: #555;
+}
+
+#debugPane {
+  display: none;
+  height: 200px;
+  overflow-y: auto;
+  background-color: #222;
+  color: #0f0;
+  padding: 10px;
+  font-family: monospace;
+  border-top: 2px solid #555;
+}
+
+/* =======================================
+   Attention Highlight (like for Updates)
+======================================= */
+.attention {
+  background-color: yellow;
+  color: red;
+  font-weight: bold;
+  padding: 10px;
+  border: 2px dashed red;
+  margin-top: 20px;
+}
+
+/* =======================================
+   Mascot Bounce Animation
+======================================= */
+/* Define the bounce keyframes */
+@keyframes mascotBounce {
+  0%   { transform: translateY(0); }
+  30%  { transform: translateY(-20px); }
+  50%  { transform: translateY(0); }
+  70%  { transform: translateY(-10px); }
+  100% { transform: translateY(0); }
+}
+
+/* Apply bounce animation when .bounce class is added */
+.bounce {
+  animation: mascotBounce 0.5s ease;
+}

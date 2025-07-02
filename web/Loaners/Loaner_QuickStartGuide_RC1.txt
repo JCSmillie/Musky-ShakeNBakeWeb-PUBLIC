@@ -1,0 +1,51 @@
+Loaner Device Manager - Quick Start Guide
+-----------------------------------------
+
+Purpose:
+The Loaner Device Manager helps Gateway IT manage loaner iPads and quickly identify which devices are available, assigned, need attention, or require wiping.
+
+How to Use:
+
+1. Selecting a Loaner Pool
+- Use the Pool dropdown at the top-right sidebar.
+- Pools like CSE, RAM, UP, etc., represent different building/device groups.
+- After selecting a pool, the system will load devices from that group.
+- A loading spinner and real-time updates ("MUSKY-BACKCHANNEL") show progress.
+
+2. Viewing Devices
+- Once loaded, you see a table of devices with details such as:
+  - Asset Tag
+  - Current User Assignment
+  - Last Check-in (hours or minutes ago)
+  - iOS Update Status (up-to-date or needs update)
+  - On/Off Campus Status
+- "Device User" column summarizes assignment issues (good/mismatch/unassigned).
+
+3. Actions You Can Take
+- Mass Wipe Selected: Wipe multiple checked devices.
+- Verify Assignment: Verify if checked devices are properly assigned.
+- Message User: (Future) Send notification to assigned users.
+- Reload Data: Re-run device search for the currently selected pool.
+- More Data: Reveal hidden columns (like UDID, Serial Number, Enrollment Type).
+- Toggle Debug: Show raw system debug information (for advanced troubleshooting).
+
+4. Submitting a Problem Report
+- Click "Problem?" button.
+- Enter a description of the issue.
+- System takes an automatic screenshot.
+- The report includes screenshot, Asset Tag, Serial Number, IP Address, Username, and Loaner Pool.
+- The report is sent via email and/or Slack (if configured).
+
+5. Theme Control
+- At the bottom of the sidebar, you can switch between:
+  - Light Mode
+  - Dark Mode
+  - Musky Mode (custom green aesthetic)
+
+Troubleshooting:
+- If "No data loaded" appears, re-select a pool or click Reload Data.
+- If you see errors, check network connections or contact IT Support.
+
+Notes:
+- Device data is refreshed live every time a pool is selected or Reload Data is clicked.
+- Final output depends on LoanerData.sh script and its integration with Mosyle/IIQ systems.

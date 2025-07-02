@@ -1,0 +1,40 @@
+<?php
+
+/*
+This script just displays all of the possible data a 3rd party module can access.
+ -JCS 7/2/25
+
+*/
+
+session_start();
+echo "<pre>DEBUG SESSION:
+";
+print_r($_SESSION);
+echo "</pre>";
+
+if (!isset($_SESSION['last_lookup']) || !is_array($_SESSION['last_lookup'])) {
+    echo "<h2 style='color: red;'>? No device data found. Please perform a lookup first in the main interface.</h2>";
+    exit;
+}
+
+$data = $_SESSION['last_lookup'];
+foreach ($data as $key => $value) {
+    $varName = preg_replace('/[^a-zA-Z0-9_]/', '_', $key);
+    $$varName = $value;
+}
+?>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Module Output</title>
+</head>
+<body>
+    <h2>? Test Module: Parsed Variables</h2>
+    <?php foreach ($data as $key => $value): ?>
+        <div>
+            <strong>$<?php echo preg_replace('/[^a-zA-Z0-9_]/', '_', $key); ?>:</strong>
+            <pre><?php echo htmlspecialchars(var_export($value, true)); ?></pre>
+        </div>
+    <?php endforeach; ?>
+</body>
+</html>

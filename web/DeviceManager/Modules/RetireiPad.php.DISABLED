@@ -1,0 +1,201 @@
+<?php
+
+
+/*
+This script does the following:
+*Create a link to click
+*Confirm you want to "Retire" an iPad
+*On confirmation goes to IIQ and moves device location, removes owner, and sets device as retired.  Connects to Mosyle, unassigns device, wipes (without RTS,) and adds the tag "RETIRED-2025."
+
+What you see here is pretty much just the PHP wrapper for it to work.  The real power comes from <<PROJECT>>/functions/WipeiPadandUpdateinventory.sh
+
+###NOTE THIS IS INCLUDED AS AN EXAMPLE.  I would imagine this would totally work if you had MOSBasic with IIQ Support enabled.  However I would bet your location identification numbers are different.  They would have to be traded out.
+
+ -JCS 7/2/25
+
+*/
+
+session_start();
+require_once "../../config.php";
+
+// Logging setup
+function log_event($message) {
+    global $LOG_PATH;
+    $username = isset($_SESSION['username']) ? $_SESSION['username'] : 'UNKNOWN';
+    $log_entry = date("Y-m-d H:i:s") . " [$username] $message\n";
+    file_put_contents($LOG_PATH . "/retire.log", $log_entry, FILE_APPEND);
+}
+
+// Check for last lookup
+if (!isset($_SESSION['last_lookup'])) {
+    echo "No device data found.";
+    exit;
+}
+
+$data = $_SESSION['last_lookup'];
+$tags = isset($data['TAGS']) ? strtoupper($data['TAGS']) : '';
+$username = isset($_SESSION['username']) ? $_SESSION['username'] : 'UNKNOWN';
+$assetTag = escapeshellarg($data['ASSETTAG']);
+
+// Block list: RETIRED* and STOLEN
+$isRetired = preg_match('/\bRETIRED[-\w]*/i', $tags);
+$isStolen  = preg_match('/\bSTOLEN\b/i', $tags);
+
+if ($isRetired || $isStolen) {
+    $reason = $isRetired ? "Device is already retired." : "Device is marked as stolen.";
+    log_event("Blocked retirement of {$data['ASSETTAG']} due to TAGS: {$tags}");
+    echo <<<HTML
+    <html>
+    <head>
+        <title>Action Blocked</title>
+        <style>
+            body {
+                background-color: orange;
+                font-family: sans-serif;
+                color: black;
+                text-align: center;
+                padding-top: 100px;
+            }
+            h1 {
+                font-size: 3em;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>{$reason}</h1>
+        <p>If this is an error see Mr. Smillie.</p>
+    </body>
+    </html>
+    HTML;
+    exit;
+}
+
+// If confirmed, run the shell script
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm']) && $_POST['confirm'] === 'yes') {
+    log_event("Retire action confirmed for {$data['ASSETTAG']}");
+
+    echo <<<HTML
+    <html>
+    <head>
+        <title>Retiring Device...</title>
+        <style>
+            body {
+                background-color: black;
+                color: white;
+                font-family: sans-serif;
+                text-align: center;
+                padding-top: 50px;
+            }
+            #mascot {
+                width: 50%;
+                animation: walk 2s linear infinite alternate;
+                position: relative;
+            }
+            @keyframes walk {
+                0% { left: 0; }
+                100% { left: 50%; }
+            }
+            #debugBox {
+                display: none;
+                margin-top: 20px;
+                padding: 10px;
+                border: 1px solid #888;
+                background-color: #222;
+                color: #0f0;
+                text-align: left;
+                width: 80%;
+                margin-left: auto;
+                margin-right: auto;
+                white-space: pre-wrap;
+            }
+            button.debug-btn {
+                margin-top: 20px;
+                padding: 10px 20px;
+                font-size: 1em;
+                background: #444;
+                color: white;
+                border: none;
+                cursor: pointer;
+            }
+        </style>
+    </head>
+    <body>
+        <img src="../../mascot.png" id="mascot" alt="Walking Mascot">
+        <h2 id="waitMessage">⏳ Please wait while the iPad is retired...</h2>
+    HTML;
+
+    $scriptPath = rtrim($LOCATION_SCRIPT_PATH, '/') . '/WipeiPadandUpdateinventory.sh';
+    $command = escapeshellcmd($scriptPath) . " $assetTag";
+    $output = shell_exec($command);
+
+    log_event("Retire script output for {$data['ASSETTAG']}: $output");
+
+    if (strpos($output, 'has been retired.') !== false) {
+        echo <<<HTML
+        <script>
+            document.getElementById('mascot').style.animation = 'none';
+            document.getElementById('waitMessage').textContent = "🎉 Device has been retired successfully! 🎉";
+            document.body.style.backgroundColor = 'green';
+            var audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3');
+            audio.play();
+        </script>
+        HTML;
+    } else {
+        echo <<<HTML
+        <script>
+            document.getElementById('mascot').style.animation = 'none';
+            document.getElementById('waitMessage').textContent = "⚠️ Something went wrong during the wipe.";
+            document.body.style.backgroundColor = '#990000';
+        </script>
+        HTML;
+    }
+
+    $escapedOutput = htmlspecialchars($output);
+    echo <<<HTML
+        <button class="debug-btn" onclick="document.getElementById('debugBox').style.display='block'; this.style.display='none';">
+            Show Debug Output
+        </button>
+        <pre id="debugBox">{$escapedOutput}</pre>
+    </body>
+    </html>
+    HTML;
+
+    exit;
+}
+
+// Confirmation screen
+log_event("Module loaded for device {$data['ASSETTAG']}");
+
+echo <<<HTML
+<html>
+<head>
+    <title>Retire iPad</title>
+    <style>
+        body {
+            background-color: #222;
+            color: white;
+            font-family: sans-serif;
+            text-align: center;
+            padding-top: 100px;
+        }
+        button {
+            font-size: 1.5em;
+            padding: 10px 20px;
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Retire this iPad?</h1>
+    <p><strong>Asset Tag:</strong> {$data['ASSETTAG']}</p>
+    <p><strong>Serial:</strong> {$data['DeviceSerialNumber']}</p>
+    <p><strong>Device Name:</strong> {$data['device_name']}</p>
+    <p><strong>TAGS:</strong> {$data['TAGS']}</p>
+    <form method="POST">
+        <button type="submit" name="confirm" value="yes">YES</button>
+        <button type="button" onclick="window.close()">Cancel</button>
+    </form>
+</body>
+</html>
+HTML;
+?>

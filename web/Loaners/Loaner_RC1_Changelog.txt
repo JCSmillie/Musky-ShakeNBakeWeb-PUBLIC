@@ -1,0 +1,40 @@
+Loaner Device Manager - Release Candidate 1 (RC1)
+Date: April 14, 2025
+------------------------------------------------------------
+
+Major Changes:
+- Added live loading spinner with real-time MUSKY-BACKCHANNEL updates
+- Switched from direct shell_exec to background fetch of LoanerData.sh output
+- Implemented parsing of device CSV output using split after marker (====================)
+- No longer mixing MUSKY-BACKCHANNEL lines with CSV parsing
+- Sidebar redesigned:
+  - Dynamic Pool selector with live fetch
+  - Clear Pool button
+  - Reload Data button
+  - Mass Wipe Selected button (with animation)
+  - Verify Assignment button
+  - Message User button
+  - More Data toggle (to show hidden columns)
+  - Toggle Debug output
+  - Theme Selector (Light / Dark / Musky Mode)
+- Mass Wipe / Verify / Message buttons disabled until selections made
+- Problem Report button (Problem?) revamped:
+  - Takes screenshot
+  - Prompts for user description
+  - Posts feedback to backend
+  - Captures Asset Tag, Serial, Loaner Pool, IP Address, Username
+- Slack + Email notifications integrated for problem reporting
+- Full safe handling of Loaner Pools using LOANER_POOLS constant mapping
+- Full CSV parsing validation
+- Streamlined /tmp/loaner_devices.csv handling
+- No more direct command execution inside index.php (security upgrade)
+- Corrected sidebar layout and styling
+- Corrected final action flow for spinner+live updates+page reload
+- Production-quality JavaScript for device interaction
+- Improved Debug Output Pane (showing CSV loading result)
+
+Known Notes:
+- MUSKY-BACKCHANNEL is critical for dynamic loading status
+- LoanerData.sh must keep correct formatting after marker line
+- Future RC2 may add AJAX dynamic table updating without page reload
+- Optional: further polish Reload button styling if needed
