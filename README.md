@@ -10,7 +10,7 @@ Winter 2024 we noticed that there was a significant delay between when ASM learn
 1. Go to IncidentIQ (ticket system,) lookup the student who needs the device, assign device in IIQ.
 2. Go to Mosyle.  Assign device to student there.  If student is missing wait 12-24hrs for student to show up.
 
-As you can imagine this creates backlog because if the student doesn't exist in Mosyle then the device can't be assigned completely.  To address this issue I wrote a very simple cgi script.  This script not only automated the two steps noted above but also makes sure the end user DOES EXIST in Mosyle and if not will create them on the fly and then assign the iPad.  Again I can't stress now simple this script was.  Simple ZSH.  You can find this script in the Examples directory as reference.  Effectively I put this on my server and protected it with an htaccess file.  As the server already had MOSBasic installed it just works.  So with these in place I could go to say http://localhost/assign.cgi?<<SERIALNUMBER> which would trigger the script and assign the device.  No worry if account exists.  As long as its proper in IncidentIQ it will be proper in Mosyle.  With this working I also wrote wipeRTS.cgi (also in the Example directory) which is called the same way but uses Return to Service mode to wipe the iPad and put it back to Limbo (unassigned but waiting) state.  Musky is the next interation of those scripts.
+As you can imagine this creates backlog because if the student doesn't exist in Mosyle then the device can't be assigned completely.  To address this issue I wrote a very simple cgi script.  This script not only automated the two steps noted above but also makes sure the end user DOES EXIST in Mosyle and if not will create them on the fly and then assign the iPad.  Again I can't stress now simple this script was.  Simple ZSH.  You can find this script in the Examples directory as reference.  Effectively I put this on my server and protected it with an htaccess file.  As the server already had MOSBasic installed it just works.  So with these in place I could go to say http://localhost/assign.cgi?**SERIALNUMBER** which would trigger the script and assign the device.  No worry if account exists.  As long as its proper in IncidentIQ it will be proper in Mosyle.  With this working I also wrote wipeRTS.cgi (also in the Example directory) which is called the same way but uses Return to Service mode to wipe the iPad and put it back to Limbo (unassigned but waiting) state.  Musky is the next interation of those scripts.
 
 <!-- NOTE --> Both assign.cgi and wipeRTS.cgi are in the Example directory.  They are definately NOT drop in and use as they depend on MOSBasic and some other custom stuff not published.  I list these files only to show you how easily this can all be done.
 
@@ -41,7 +41,12 @@ Musky pages support .htaccess restrictions and is the recommended way to set thi
 
 
 # Pages Available:
+This is the landing page.  Not much to look at:
+
+<img src="https://github.com/JCSmillie/Musky-ShakeNBakeWeb-PUBLIC/blob/main/Imagery/main.png" alt="Landing Page" width="600"/>
+
 ## DeviceManager Page:
+<img src="https://github.com/JCSmillie/Musky-ShakeNBakeWeb-PUBLIC/blob/main/Imagery/DeviceManager.png" alt="Device Manager View." width="600"/>
 This is the core of what will become the Musky suite.  This page (**PROJECT**/Web/DeviceManger/index.php) is where you will look up devices (by asset tag as noted in your Mosyle install) and perform most actions.  Post lookup the buttons available are:
 * Wipe Device -> Tell iPad to use RTS to wipe and return to Limbo state.
 * Enable Lost Mode -> Eanble lost mode.  
@@ -55,6 +60,7 @@ This is the core of what will become the Musky suite.  This page (**PROJECT**/We
 And in the bottom left corner the PROBLEM button for reporting issues.  This button is special in that when clicked a popup will appear asking you the issue.  You type and submit.  The submission is then emailed to the address listed in config.php with a screenshot of how Musky was as of the report.  
 
 ## Loaners Page
+<img src="https://github.com/JCSmillie/Musky-ShakeNBakeWeb-PUBLIC/blob/main/Imagery/LoanerView.png" alt="Loaner Device View." width="600"/>
 This page allows group actions.  Mainly used to get a list of preselected groups and then you can click the assset tag to get more info on that particular device:  Buttons available are:
 * Mass Wipe Selected
 * Verify Assignment  <-Disabled.  Future.
