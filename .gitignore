@@ -1,4 +1,26 @@
-Functions/.DS_Store
+# macOS system files
 .DS_Store
+Functions/.DS_Store
+
+# Apache config (don't expose webroot behavior)
 .htaccess
+
+# Private configuration and tokens
+Functions/.MuskyConfig
+Functions/Utility/.breadcrumb
+Functions/Utility/*.json
+Functions/Utility/raw_dumps/
+
+# Temporary or local dev content
+web/DeviceManager/test.php
+web/Loaners/index.php.BKUP.php
+TMP-RANDOMJUNK/
+Notez/
 OTP/
+
+# Archives and logs
+*.zip
+*.log
+
+# Files explicitly marked as private
+*PRIVATE*
