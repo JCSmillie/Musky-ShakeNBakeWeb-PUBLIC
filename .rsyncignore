@@ -10,6 +10,7 @@ Functions/.MuskyConfig
 Functions/Utility/.breadcrumb
 Functions/Utility/*.json
 Functions/Utility/raw_dumps/
+config.php
 
 # Temporary or local dev content
 web/DeviceManager/test.php

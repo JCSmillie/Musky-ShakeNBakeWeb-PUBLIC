@@ -2,6 +2,9 @@
 // config.php
 // Main configuration file for Smillieland-based MUSKY tools
 
+// I have kept alot of my paths as they were because I think it makes it easer to understand
+// what points to what.  
+
 // =============================================
 // Paths (custom binaries, tools, or scripts)
 // =============================================
@@ -14,8 +17,8 @@ $LOCATION_SCRIPT_PATH = '/AddonStorage/webcontent/MuskyFunctions/';
 // as being inside trusted district infrastructure
 // =============================================
 $CAMPUS_IPS = [
-    '65.254.21.222', // Gateway Core WiFi
-    '10.1.12.200',   // Example: New Campus Building IP
+    '192.168.1.1', // Gateway Core WiFi
+    '172.16.1.1',   // Example: New Campus Building IP
     '10.1.12.201',   // Admin Center WAN IP
     // Add more IPs as needed
 ];
@@ -44,7 +47,7 @@ $LOG_PATH = '/usr/local/mosbasicsupport/MUSKY/';
 // =============================================
 // Enable/Disable 3rd Party Modules
 if (!defined('ENABLE_DEVICE_MANAGER_MODULES')) {
-    define('ENABLE_DEVICE_MANAGER_MODULES', true);
+    define('ENABLE_DEVICE_MANAGER_MODULES', false);
 }
 if (!defined('ENABLE_LOANER_MODULES')) {
     define('ENABLE_LOANER_MODULES', false);
@@ -57,10 +60,10 @@ if (!defined('ENABLE_LOANER_MODULES')) {
 // =============================================
 
 // Enable or disable Slack notifications for problem reports
-$ENABLE_SLACK = true; // <-- Set to true to enable
+$ENABLE_SLACK = false; // <-- Set to true to enable
 
 // Slack Webhook URL (only used if $ENABLE_SLACK is true)
-$SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/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';
+$SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/T1MPWMasdds5/B08NJ9332rdL/aM6xzQKTHISISNOTAREALKEYGUdunEVLtlEYtosck';
 // =============================================
 // Two-Factor Authentication Support
 // =============================================
@@ -68,14 +71,14 @@ $SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/T1MPWM5JB/B08NJ9C2S6L/aM6
 // If 2FA is enabled, users must log in via the specified portal before accessing MUSKY tools
 // If false, legacy Apache or .htaccess authentication may be used instead
 // =============================================
-$ENABLE_2FA = true;
+$ENABLE_2FA = false;
 
 // Path to the Smillieland 2FA portal config file.
 // Used by check_access.php to enforce login and access control.
 $TWO_FA_CONFIG_PATH = '/AddonStorage/webcontent/htdocs/secure/2fa-portal/config.php';
 
 // Base URL to the 2FA portal. Can be local (e.g. /2fa-portal/) or remote (https://some.other.server/portal/)
-$TWO_FA_PORTAL_URL = 'https://donatello.gatewayk12.org/secure/2fa-portal/';
+$TWO_FA_PORTAL_URL = 'https://your2faportal.local/secure/2fa-portal/';
 
 // Session timeout in seconds (used by auth_check.php / check_access.php)
 $SESSION_TIMEOUT = 1800;

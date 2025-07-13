@@ -59,17 +59,36 @@ So not to toot my own horn too much but I'm pretty decent at shell languages.  I
 - **Mist API**: Optional, but provides powerful enrichment for device location
 - **Apache/PHP**: Web server base, CGI for secure script execution
 
----
-
-
+## Instructions:
+- Install MOSBasic on a Linux running machine.  I run CentOS7 and CentOS9 Stream personally.
+- Test MOSBasic.  From the command line dump your Mosyle data.  Now try 'mosbasic info <assettag>'.  If you get return data you should be in business.
+- Clone the MUSKY repo your your web server.
+- Create symlinks to serve the content:
+  - Create a symlink from the web folder (in this project) to your web server space so it can be hosted.  So probably a link to /var/www/htdocs/Musky woud be good again if your CentOS.
+  - Create a symlink from the functions folder (in this project) to /var/www/functions.
+- Consult the MUSKY security guide for notes on creating a general .htaccess file to protect your install.
+- Edit your Apache config to allow access to these directories.
+ ```
+ <Directory "<MUSKY-Repo>/MuskyFunctions/">
+     # Allow open access:
+     Require all granted
+ </Directory>
+ <Directory "<MOSBAsicRepo>/MOSBasic/">
+     # Allow open access:
+     Require all granted
+     Options Indexes
+ </Directory>
+```
+##Musky Configs to Edit:
 Files to Edit to make this work in your environment:
 The following files must be edited for your environment.  Files are heavily commented:
-* **PROJECT**/web/DeviceManager/decode_tags.php <-List of any notable tags (as they appear in Mosyle) and what should be displayed if that tag is found.
-* **PROJECT**/web/config.php <-Base configuration.  This is where you tell Musky where to find your MOSBasic install, local locations for Musky's Support scripts, log locations, etc.
-* **PROJECT**/web/loaner_constants.php <-List of Loaner Pools to be displayed and what to show those loaner pools name as.  See understanding Loaners.
-* **PROJECT**/web/mascot.png & musky_favicon.png <-Musky Themed graphics.  You can replace these, but I ask you don't mess with the about.php file.
+* <MUSKY-Repo>/web/DeviceManager/decode_tags.php <-List of any notable tags (as they appear in Mosyle) and what should be displayed if that tag is found.
+* <MUSKY-Repo>/web/config.php <-Base configuration.  This is where you tell Musky where to find your MOSBasic install, local locations for Musky's Support scripts, log locations, etc.
+* <MUSKY-Repo>/web/loaner_constants.php <-List of Loaner Pools to be displayed and what to show those loaner pools name as.  See understanding Loaners.
+* <MUSKY-Repo>/web/mascot.png & musky_favicon.png <-Musky Themed graphics.  You can replace these, but I ask you don't mess with the about.php file.
   
 Open up your browser to whereeveryouputit/index.php and away you go.
+
 
 ## SECURING ACCESS:
 Musky pages support .htaccess restrictions and is the recommended way to set this up.  Onsite (and in various places in the code comments) you can see I have our own 2FA solution tied in there.  That documentaion will not be provided at this time.  Search for apache .htaccess; you should find a ton of info.
