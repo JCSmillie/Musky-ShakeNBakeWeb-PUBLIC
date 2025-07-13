@@ -57,10 +57,10 @@ if (!defined('ENABLE_LOANER_MODULES')) {
 // =============================================
 
 // Enable or disable Slack notifications for problem reports
-$ENABLE_SLACK = false; // <-- Set to true to enable
+$ENABLE_SLACK = true; // <-- Set to true to enable
 
 // Slack Webhook URL (only used if $ENABLE_SLACK is true)
-$SLACK_WEBHOOK_URL = 'https://slack.local';
+$SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/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';
 // =============================================
 // Two-Factor Authentication Support
 // =============================================
@@ -68,14 +68,14 @@ $SLACK_WEBHOOK_URL = 'https://slack.local';
 // If 2FA is enabled, users must log in via the specified portal before accessing MUSKY tools
 // If false, legacy Apache or .htaccess authentication may be used instead
 // =============================================
-$ENABLE_2FA = false;
+$ENABLE_2FA = true;
 
 // Path to the Smillieland 2FA portal config file.
 // Used by check_access.php to enforce login and access control.
 $TWO_FA_CONFIG_PATH = '/AddonStorage/webcontent/htdocs/secure/2fa-portal/config.php';
 
 // Base URL to the 2FA portal. Can be local (e.g. /2fa-portal/) or remote (https://some.other.server/portal/)
-$TWO_FA_PORTAL_URL = 'https://2fa.local';
+$TWO_FA_PORTAL_URL = 'https://donatello.gatewayk12.org/secure/2fa-portal/';
 
 // Session timeout in seconds (used by auth_check.php / check_access.php)
 $SESSION_TIMEOUT = 1800;

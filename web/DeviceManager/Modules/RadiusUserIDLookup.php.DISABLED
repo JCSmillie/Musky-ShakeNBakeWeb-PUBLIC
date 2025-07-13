@@ -1,0 +1,227 @@
+<?php
+session_start();
+require_once("../../config.php");
+
+// === Load .secrets file from current script directory ===
+$secretsFile = __DIR__ . '/.secrets';
+if (!file_exists($secretsFile)) {
+    die("❌ Missing .secrets at $secretsFile");
+}
+$secrets = json_decode(file_get_contents($secretsFile), true);
+if (!is_array($secrets)) {
+    die("❌ Failed to parse .secrets JSON.");
+}
+
+$radius_token = $secrets['RADIUS_TOKEN'] ?? '';
+$radius_url_template = $secrets['RADIUS_URL_TEMPLATE'] ?? '';
+
+if (!$radius_token || !$radius_url_template) {
+    die("❌ .secrets missing required keys.");
+}
+
+// === Load BSSID → AP Name map from Utility dump ===
+$apNameMapPath = __DIR__ . '/../../../Functions/Utility/bssid_to_apname_map.json';
+$bssidToName = file_exists($apNameMapPath) ? json_decode(file_get_contents($apNameMapPath), true) : [];
+
+function macFormat($mac) {
+    return strtoupper(str_replace('-', ':', $mac));
+}
+
+function lookupWAPName($mac, $map) {
+    $mac = macFormat($mac);
+    return $map[$mac] ?? null;
+}
+
+function formatBytes($bytes) {
+    if (!is_numeric($bytes)) return '—';
+    $units = ['B','KB','MB','GB','TB'];
+    $i = floor(log($bytes ?: 1, 1024));
+    return round($bytes / pow(1024, $i), 2) . ' ' . $units[$i];
+}
+
+function formatDuration($s) {
+    if (!is_numeric($s)) return '—';
+    $h = floor($s / 3600); $m = floor(($s % 3600) / 60); $s = $s % 60;
+    return sprintf('%02dh %02dm %02ds', $h, $m, $s);
+}
+
+// === Start page output ===
+echo <<<HTML
+<!DOCTYPE html>
+<html>
+<head>
+    <title>RADIUS Log Lookup</title>
+    <style>
+        #loadingOverlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: sans-serif;
+            font-size: 1.5em;
+            color: #333;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); }
+        }
+        .loader-circle {
+            border: 8px solid #eee;
+            border-top: 8px solid #3498db;
+            border-radius: 50%;
+            width: 60px; height: 60px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<div id="loadingOverlay">
+    <div style="text-align:center">
+        <div class="loader-circle"></div>
+        <div>⏳ Fetching RADIUS log data...</div>
+    </div>
+</div>
+<h2>🔍 RADIUS Log Lookup</h2>
+HTML;
+
+@ob_flush();
+flush();
+
+if (empty($_SESSION['last_lookup']['USERID'])) {
+    echo "<p>⚠️ No user ID provided. Please add ?uid=username to the URL.</p>";
+    exit;
+}
+
+$uid = $_SESSION['last_lookup']['USERID'];
+echo "<strong>👤 USERID:</strong> " . htmlspecialchars($uid) . "<br>";
+
+$should_lookup = !isset($_SESSION['radius_data'][$uid]) || !is_array($_SESSION['radius_data'][$uid]) || count($_SESSION['radius_data'][$uid]) === 0;
+
+if ($should_lookup) {
+    $url = str_replace('{UID}', urlencode($uid), $radius_url_template);
+
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        "Authorization: Bearer $radius_token",
+        "Accept: application/json"
+    ]);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
+    $curlErr = curl_error($ch);
+    curl_close($ch);
+
+    if ($curlErr) {
+        echo "<div style='color:red;'>❌ cURL Error: $curlErr</div></body></html>";
+        exit;
+    }
+
+    if ($httpCode !== 200 || stripos($contentType, 'application/json') === false) {
+        echo "<div style='color:red;'>❌ API Error: HTTP $httpCode<br>Content-Type: $contentType</div>";
+        echo "<pre>" . htmlspecialchars($response) . "</pre></body></html>";
+        exit;
+    }
+
+    $data = json_decode($response, true);
+    if (!is_array($data)) {
+        echo "<div style='color:red;'>❌ JSON decode failed: " . json_last_error_msg() . "</div>";
+        echo "<pre>" . htmlspecialchars($response) . "</pre></body></html>";
+        exit;
+    }
+
+    $_SESSION['radius_data'][$uid] = $data;
+}
+
+$allData = $_SESSION['radius_data'][$uid];
+$packet_type = $_GET['type'] ?? 'all';
+
+echo "<form method='get' style='margin:10px 0;'>
+    Show Packet Type:
+    <select name='type' onchange='this.form.submit()'>
+        <option value='all'" . ($packet_type === 'all' ? ' selected' : '') . ">All</option>
+        <option value='1'" . ($packet_type === '1' ? ' selected' : '') . ">1 - Authentication</option>
+        <option value='4'" . ($packet_type === '4' ? ' selected' : '') . ">4 - Accounting</option>
+    </select>
+</form>";
+
+$filtered = $packet_type === 'all' ? $allData : array_filter($allData, fn($r) => $r['Packet_Type'] === $packet_type);
+$grouped = [];
+foreach ($filtered as $r) {
+    $grouped[$r['Acct_Session_Id'] ?? uniqid()][] = $r;
+}
+
+echo "<p>✅ Showing " . count($filtered) . " entries (Grouped by session).</p>";
+echo "<table border='1' cellpadding='5' cellspacing='0' style='border-collapse: collapse; font-family: sans-serif; width: 100%;'>";
+echo "<tr style='background:#333;color:#fff;'>
+    <th>Type</th>
+    <th>Timestamp</th>
+    <th>IP</th>
+    <th>MAC</th>
+    <th>WAP MAC</th>
+    <th>AP Name</th>
+    <th>SSID</th>
+    <th>Policy</th>
+    <th>In</th>
+    <th>Out</th>
+    <th>Duration</th>
+    <th>Client</th>
+</tr>";
+
+foreach ($grouped as $session_id => $records) {
+    echo "<tr style='background:#ccc;'><td colspan='12'>Session ID: $session_id (" . count($records) . " records)</td></tr>";
+    foreach ($records as $r) {
+        $ptype = $r['Packet_Type'] ?? '?';
+        $badge = $ptype === '1' ? '🟡' : ($ptype === '4' ? '🟢' : '🔘');
+
+        $timestamp = htmlspecialchars($r['timestamp'] ?? '');
+        $ip = htmlspecialchars($r['Framed_IP_Address'] ?? '—');
+        $mac = macFormat($r['Calling_Station_Id'] ?? '');
+        [$wap_mac_raw, $ssid] = explode(':', ($r['Called_Station_Id'] ?? '') . ':');
+        $wap_mac = macFormat($wap_mac_raw);
+        $apname = lookupWAPName($wap_mac, $bssidToName) ?? '—';
+        $policy = $r['NP_Policy_Name'] ?: ($r['Proxy_Policy_Name'] ?? '—');
+        $in = formatBytes($r['Acct_Input_Octets']);
+        $out = formatBytes($r['Acct_Output_Octets']);
+        $duration = formatDuration($r['Acct_Session_Time']);
+        $client = htmlspecialchars($r['Client_Friendly_Name'] ?? '—');
+
+        echo "<tr>
+            <td align='center'>$badge</td>
+            <td>$timestamp</td>
+            <td>$ip</td>
+            <td>$mac</td>
+            <td>$wap_mac</td>
+            <td>$apname</td>
+            <td>$ssid</td>
+            <td>$policy</td>
+            <td align='right'>$in</td>
+            <td align='right'>$out</td>
+            <td align='right'>$duration</td>
+            <td>$client</td>
+        </tr>";
+    }
+}
+echo "</table>";
+
+echo "<br><button onclick=\"document.getElementById('rawjson').style.display = (document.getElementById('rawjson').style.display === 'none' ? 'block' : 'none')\">📦 Show Raw JSON</button>";
+echo "<div id='rawjson' style='display:none;margin-top:10px;'><pre style='max-height:400px;overflow:auto;background:#f4f4f4;border:1px solid #ccc;padding:10px;'>" .
+    htmlspecialchars(json_encode($allData, JSON_PRETTY_PRINT)) . "</pre></div>";
+
+?>
+
+<script>
+window.onload = function() {
+    let overlay = document.getElementById('loadingOverlay');
+    if (overlay) overlay.style.display = 'none';
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<?php
+// ExtractNamedVars.php
+// Parses key info from $lines and assigns to readable named variables
+
+if (!isset($lines) || !is_array($lines)) {
+    echo "<div style='color:red;font-weight:bold;'>⚠️ \$lines array is missing or not populated.</div>";
+    return;
+}
+
+// Create a lookup array from key=value format
+$kvMap = [];
+foreach ($lines as $line) {
+    if (strpos($line, '=') !== false) {
+        list($k, $v) = explode('=', $line, 2);
+        $kvMap[trim($k)] = trim($v);
+    }
+}
+
+// Now extract and rename the variables
+$assetTag           = $kvMap['ASSETTAG']          ?? null;
+$deviceSerial       = $kvMap['DeviceSerialNumber'] ?? null;
+$udid               = $kvMap['UDID']              ?? null;
+$currentName        = $kvMap['CURRENTNAME']       ?? null;
+$userId             = $kvMap['USERID']            ?? null;
+$assignedTo         = $kvMap['ASSIGNEDTO']        ?? null;
+$lastCheckin        = $kvMap['LASTCHECKIN']       ?? null;
+$lastCheckinRaw     = $kvMap['LASTCHECKINRAW']    ?? null;
+$lostModeStatus     = $kvMap['LOSTMODESTATUS']    ?? null;
+$lastIp             = $kvMap['LAST_IP_BEAT']      ?? null;
+$lastLanIp          = $kvMap['LAST_LAN_IP']       ?? null;
+$needsOsUpdate      = $kvMap['NEEDSOSUPDATE']     ?? null;
+$enrollmentType     = $kvMap['ENROLLMENT_TYPE']   ?? null;
+
+// Output these named variables
+echo "<h2>📦 Named Device Variables</h2>";
+echo "<table style='border-collapse:collapse;width:100%;max-width:800px;'>";
+foreach ([
+    'Asset Tag' => $assetTag,
+    'Serial Number' => $deviceSerial,
+    'UDID' => $udid,
+    'Device Name' => $currentName,
+    'User ID' => $userId,
+    'Assigned To' => $assignedTo,
+    'Check-in Time' => $lastCheckin,
+    'Check-in Timestamp' => $lastCheckinRaw,
+    'Lost Mode Status' => $lostModeStatus,
+    'Last IP' => $lastIp,
+    'LAN IP' => $lastLanIp,
+    'Needs OS Update' => $needsOsUpdate,
+    'Enrollment Type' => $enrollmentType
+] as $label => $value) {
+    echo "<tr>";
+    echo "<td style='padding:6px;border:1px solid #ccc;font-weight:bold;'>$label</td>";
+    echo "<td style='padding:6px;border:1px solid #ccc;'>" . htmlspecialchars($value ?? '—') . "</td>";
+    echo "</tr>";
+}
+echo "</table>";
+?>

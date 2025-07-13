@@ -33,7 +33,8 @@ if (!defined('LOANER_POOLS')) {
         'RAM' => 'RAM-Loaner',
         'UP' => 'UP-Loaner',
         'GMS' => 'GMS-Loaner',
-        'DistrictIT' => 'GSD-Loaner'
+        'DistrictIT' => 'GSD-Loaner',
+        'GHS Art Cart' => 'GHSArt'
     ]);
 }
 ?>

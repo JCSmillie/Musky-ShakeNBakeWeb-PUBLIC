@@ -1,11 +1,4 @@
 <?php
-
-/*
-This script just displays all of the possible data a 3rd party module can access.
- -JCS 7/2/25
-
-*/
-
 session_start();
 echo "<pre>DEBUG SESSION:
 ";

@@ -1,98 +1,138 @@
 # MUSKY Project Security Overview
 
-This document outlines the structure, usage, and deployment of the integrated security system used in MUSKY tools developed at Gateway School District. It focuses on session-based 2FA enforcement via PHP and LDAP, designed to be portable and maintainable.
+This document outlines the architecture and deployment details for MUSKY’s secure access control system, used across Gateway School District tools. It emphasizes session-based 2FA (Two-Factor Authentication) layered with optional Apache authentication and LDAP integration.
 
 ---
 
-## 🔐 Features
+## 🔐 Core Security Features
 
-- **2FA session enforcement** using a centralized `check_access.php`
-- **LDAP authentication** backed by Active Directory
-- **Time-based session expiration** with automatic re-authentication
-- **Logging of successful logins, session expirations, and redirects**
-- **Portable architecture**: enable or disable 2FA from the main `config.php`
-- **Support for internal or external 2FA portals**
+- ✅ **2FA session enforcement** (`check_access.php`)
+- ✅ **LDAP authentication** using Active Directory
+- ✅ **Session timeout logic** (idle-based auto-expiry)
+- ✅ **Post-login redirect** returns user to original path
+- ✅ **Redirect logging** to `/tmp/login_redirect.log`
+- ✅ **Security HTTP headers** via both Apache and PHP
+- ✅ **Optional .htaccess support** for IP or LDAP group whitelisting
 
 ---
 
-## 🔧 Files Involved
+## 📦 Required Files
 
 ### `check_access.php`
-This file is included at the top of any MUSKY page you want to protect:
+
+Include this at the top of any protected page:
+
 ```php
 <?php require_once '../check_access.php'; ?>
 ```
 
-It enforces 2FA sessions, handles session expiry, logs access events, and redirects to the configured login portal when needed.
+Responsibilities:
+- Enforces presence of `$_SESSION['check_in']`
+- Redirects to 2FA portal if missing, preserving original request URL via `?return=...`
+- Implements 1-hour idle timeout via `$_SESSION['last_activity']`
+- Sets fallback HTTP headers for browser security
 
-### `config.php` (project root)
-Defines global project settings, including:
-- `$ENABLE_2FA` - Enable or disable 2FA enforcement
-- `$TWO_FA_PORTAL_URL` - URL to 2FA login system (local or remote)
-- `$TWO_FA_CONFIG_PATH` - Path to 2FA portal config file
-- `$SESSION_TIMEOUT` - Session expiration in seconds
-- `$SESSION_LOG_PATH` - Log file path for session events
-
-### `config.php` (2FA Portal)
-Located in the 2FA portal directory (e.g. `/secure/2fa-portal/`). This config defines:
-- LDAP connection details (host, bind DN, password)
-- Path to the SQLite TOTP database
-- Portal-specific timeouts
+📌 **Latest additions:**
+- Verifies session start via `session_start()`
+- Uses `$_SESSION['check_in']` (not just `logged_in`)
+- Redirect-aware (`$_SERVER['REQUEST_URI']`)
 
 ---
 
-## ✅ How to Add 2FA to a MUSKY Page
+### `login.php` (in `/secure/2fa-portal/`)
 
-1. Include `check_access.php` at the top:
-```php
-<?php require_once '../check_access.php'; ?>
+Handles:
+- Username/password authentication via LDAP
+- TOTP-based 2FA
+- Redirect back to page user attempted to access (`?return=...`)
+- Logs redirection targets and request URI to `/tmp/login_redirect.log`
+
+🔐 **Key implementation points:**
+- Must set: `$_SESSION['check_in'] = true;` upon successful login
+- Validates and sanitizes the redirect target to avoid open redirects
+- Example:
+  ```php
+  $return = urldecode($_GET['return'] ?? '/');
+  if (!preg_match('/^\/[\w\-\/\.\?=&]+$/', $return)) {
+      $return = '/';
+  }
+  header("Location: $return");
+  ```
+
+---
+
+### `config.php` (2FA portal)
+
+Defines LDAP bind credentials and TOTP DB path:
+- `ldap_host`
+- `ldap_bind_dn`
+- `ldap_bind_password`
+- `ldap_base_dn`
+- `ldap_attribute` (e.g., `sAMAccountName`)
+- `totp_db` (SQLite path)
+
+---
+
+## 🔐 Optional: `.htaccess` Security Layer
+
+For environments without full Apache config access, use `.htaccess`:
+
+```apache
+AuthType Basic
+AuthName "Musky Secure"
+AuthUserFile /path/to/.htpasswd
+Require valid-user
+
+Order Deny,Allow
+Deny from all
+Allow from 10.0.0.0/8
+Allow from 192.168.0.0/16
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "no-referrer"
+</IfModule>
+
+<FilesMatch "^(config\.php|\.env|\.secrets)$">
+    Require all denied
+</FilesMatch>
+
+Options -Indexes
 ```
-2. Ensure the project-level `config.php` contains a valid path to the 2FA portal config:
-```php
-$TWO_FA_CONFIG_PATH = '/path/to/2fa-portal/config.php';
-```
-3. Set `$ENABLE_2FA = true;` to activate enforcement.
 
 ---
 
-## 🛡️ Security Notes
+## 🧠 Admin Recommendations
 
-- `check_access.php` starts with `<?php` and contains **no whitespace or output outside PHP**
-- Files are logged to `$SESSION_LOG_PATH`, including:
-  - LOGIN SUCCESS
-  - LOGIN REDIRECT (unauthenticated)
-  - SESSION EXPIRED
-- Access to the 2FA portal should be secured with TLS and/or IP restrictions.
-- Sessions are tracked by PHP and expire via idle timeout (default: 30 minutes)
+- 🧱 **Use Apache config instead of .htaccess** where possible (`AllowOverride None`)
+- 💾 **Session timeout**: set `$_SESSION['last_activity']` and check age each request
+- 🔒 **Redirect protection**: never allow full URLs from user input
+- 📜 **Audit login_redirect.log** to debug redirect issues
 
 ---
 
-## 🧪 Debugging Tips
+## ✅ Minimum Setup Checklist
 
-- Use `head -n 1 check_access.php | cat -A` to verify no invisible whitespace or BOM
-- Use `die("CHECK_ACCESS")` at the top of `check_access.php` to verify it executes
-- Avoid including `check_access.php` inside HTML or `file_get_contents()` — must be parsed as PHP
-
----
-
-## 🧼 Clean Inclusion Example
-```php
-<?php
-require_once '../check_access.php';
-require_once '../config.php';
-?>
-```
-Make sure this code is at the **top of your page**, before any output.
+1. ✅ Protect each page with `require_once 'check_access.php';`
+2. ✅ Make sure `login.php` sets `$_SESSION['check_in'] = true;`
+3. ✅ Preserve intended destination via `?return=` and `$_SERVER['REQUEST_URI']`
+4. ✅ Set headers in Apache OR fallback PHP block
+5. ✅ Implement `expired.php` to handle timeout exits cleanly
 
 ---
 
-## 📦 Future Enhancements
+## 🧪 Testing Tips
 
-- Optional IP allowlisting via `$CAMPUS_IPS`
-- Per-user 2FA exemptions or group-based overrides
-- 2FA bypass tokens for automated scripts
-- Optional Slack notifications for first-time logins or security anomalies
+- Use `curl -I` to confirm HTTP headers are returned
+- Access a subpage directly and verify you’re returned after login
+- Confirm `/tmp/login_redirect.log` captures intended targets
 
 ---
 
-Maintained by Jesse Smillie for Gateway School District. Contributions welcome!
+## 📁 See Also
+
+- `expired.php` – optional timeout page
+- `login.withCheckIn.php` – patched example with comments
+- `check_access.SECURE.php` – hardened access wrapper

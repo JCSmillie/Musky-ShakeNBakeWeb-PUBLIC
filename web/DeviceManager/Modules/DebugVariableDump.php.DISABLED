@@ -1,0 +1,59 @@
+<?php
+// DebugVariableDump.php
+// Displays all defined variables and their current values with a Copy button
+?>
+
+<hr><h2>🛠️ Debug: Defined Variables</h2>
+
+<!-- COPY BUTTON -->
+<div style="margin-bottom:1em;">
+  <button onclick="copyDebugText()" style="padding:0.5em 1em;font-weight:bold;border:none;border-radius:5px;background:#007BFF;color:white;cursor:pointer;">
+    📋 COPY DEBUG
+  </button>
+</div>
+
+<!-- DEBUG OUTPUT -->
+<pre id="debug-variable-dump" style="background:#eee;padding:1em;border:1px solid #ccc;max-height:400px;overflow:auto;">
+<?php
+$definedVars = get_defined_vars();
+$excludeKeys = [
+    '_GET', '_POST', '_COOKIE', '_FILES', '_SERVER', '_ENV', '_SESSION', 'GLOBALS',
+    'definedVars', 'excludeKeys'
+];
+
+foreach ($definedVars as $varName => $varValue) {
+    if (in_array($varName, $excludeKeys, true)) {
+        continue;
+    }
+
+    echo '$' . $varName . ' = ';
+    if (is_array($varValue) || is_object($varValue)) {
+        print_r($varValue);
+    } else {
+        var_export($varValue);
+    }
+    echo "\n\n";
+}
+?>
+</pre>
+<hr>
+
+<script>
+// ========== COPY DEBUG FUNCTION ==========
+function copyDebugText() {
+  const debugPre = document.getElementById('debug-variable-dump');
+  if (!debugPre) return;
+  const range = document.createRange();
+  range.selectNode(debugPre);
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
+  try {
+    document.execCommand('copy');
+    alert("✅ Debug output copied to clipboard!");
+  } catch (err) {
+    alert("❌ Copy failed.");
+  }
+  selection.removeAllRanges();
+}
+</script>

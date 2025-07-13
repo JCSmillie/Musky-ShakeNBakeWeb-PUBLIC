@@ -1,7 +1,9 @@
-<?php require_once '../check_access.php'; ?>
-session_start();
 <?php
-session_start();
+require_once '../check_access.php';
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 define('SQLITE_PATH', '/etc/httpd/2Fa/MUSKY2FA.db');
 $TWO_FA_PORTAL_URL = $TWO_FA_PORTAL_URL ?? '/2fa';
@@ -60,10 +62,7 @@ error_reporting(E_ALL);
 // ===================
 $showSidebar = false;
 $parsedData = [];
-    if (!empty($parsedData) && is_array($parsedData)) {
-        $_SESSION['last_lookup'] = $parsedData;
-    }
-    include 'decode_tags.php';
+$deviceStolen = false;
     if (!empty($parsedData) && is_array($parsedData)) {
         $_SESSION['last_lookup'] = $parsedData;
     }
@@ -169,12 +168,30 @@ function loadModule(name) {
   cursor: pointer;
   z-index: 10000;
 }
+
+.urgent-alert {
+  background-color: red;
+  color: white;
+  font-size: 2em;
+  font-weight: bold;
+  text-align: center;
+  padding: 1em;
+  margin: 1em 0;
+  border: 4px solid black;
+  animation: pulse 1s infinite;
+}
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
 </style>
 </head>
 
 <body>
 <div class="top-controls" style="display:flex;justify-content:space-between;align-items:center;margin:1em 0;">
-    <button onclick="window.location.href='../index.php'" style="background:#ccc;padding:0.5em 1em;border:none;border-radius:5px;cursor:pointer;"> ↩︎Return to Launch</button>
+    <button onclick="window.location.href='../index.php'" style="background:#ccc;padding:0.5em 1em;border:none;border-radius:5px;cursor:pointer;">?? Return to Launch</button>
     <div id="refresh-timer" style="font-weight:bold;">Last updated: just now</div>
 </div>
 
@@ -204,6 +221,9 @@ function loadModule(name) {
     value="<?php echo isset($_POST['user_input']) ? htmlspecialchars($_POST['user_input']) : ''; ?>" required>
   <button type="submit" class="action-button">Search!</button>
 </form>
+<?php if ($deviceStolen): ?>
+  <div class="urgent-alert">CONTACT MR. SMILLIE ASAP!!!!</div>
+<?php endif; ?>
 
 <?php
 // ===================
@@ -317,11 +337,17 @@ if (!empty($parsedData)) {
         }
     }
 
-    // External tag decoder
-    include 'decode_tags.php';
-    $_SESSION['last_lookup'] = $parsedData;
+    // Detect STOLEN tag
+    $tags = explode(',', $parsedData['TAGS'] ?? '');
+    $tags = array_map('trim', array_map('strtoupper', $tags));
+    if (in_array('STOLEN', $tags)) {
+        $deviceStolen = true;
+    }
 
-        echo "<hr><h3>3rd Party Modules</h3>";
+// External tag decoder
+    include 'decode_tags.php';
+// ========== 3rd Party Modules ==========
+        echo "<hr><h3>🛠️ 3rd Party Modules</h3>";
         $modFiles = glob(__DIR__ . "/Modules/*.php");
         if (!empty($modFiles)) {
             echo "<ul>";
@@ -337,15 +363,6 @@ if (!empty($parsedData)) {
 ?>
 
 
-
-<?php if (defined('ENABLE_DEVICE_MANAGER_MODULES') && ENABLE_DEVICE_MANAGER_MODULES === true && isset($lines) && is_array($lines) && count($lines) > 0): ?>
-    <div class="module-toggle" style="margin-top: 20px;">
-        <h3 onclick="toggleModules()" style="cursor: pointer;"><span id="moduleToggleIcon"></span> 3rd Party Modules</h3>
-        <div id="moduleContainer" style="display: none; padding: 10px; border: 1px solid #ccc; background: #f9f9f9;">
-            <div id="moduleOutput">Loading modules...</div>
-<?php endif; ?>
-        </div>
-    </div>
 </div> <!-- end main -->
 <?php if ($showSidebar): ?>
 <?php
@@ -355,6 +372,14 @@ $lostModeStatus = strtoupper(trim($parsedData['LOSTMODESTATUS'] ?? ''));
 
 <!-- Sidebar with action buttons -->
 <div class="sidebar">
+<?php if ($deviceStolen): ?>
+<style>
+.sidebar .action-button {
+  background-color: black !important;
+  color: white !important;
+}
+</style>
+<?php endif; ?>
 <h3>Actions</h3>
 
 <!-- Action Form -->
@@ -362,7 +387,8 @@ $lostModeStatus = strtoupper(trim($parsedData['LOSTMODESTATUS'] ?? ''));
   <input type="hidden" name="previous_input" value="<?php echo htmlspecialchars($rawInput); ?>">
   <input type="hidden" name="device_serial" value="<?php echo htmlspecialchars($parsedData['DeviceSerialNumber'] ?? ''); ?>">
 
-  <!-- Wipe Device -->
+  <?php if (!$deviceStolen): ?>
+<!-- Wipe Device -->
   <button class="action-button" name="button1" onclick="return confirm('Are you sure you want to Wipe the device?');">
     Wipe Device
   </button>
@@ -408,7 +434,8 @@ $lostModeStatus = strtoupper(trim($parsedData['LOSTMODESTATUS'] ?? ''));
   }
   ?>
 
-  <!-- Refresh Lookup -->
+  <?php endif; ?>
+<!-- Refresh Lookup -->
   <button class="action-button" type="button" onclick="forceRefresh()">
     Look Up Again
   </button>
@@ -418,6 +445,9 @@ $lostModeStatus = strtoupper(trim($parsedData['LOSTMODESTATUS'] ?? ''));
     DEBUG
   </button>
 </form>
+<?php if ($deviceStolen): ?>
+  <div class="urgent-alert">CONTACT MR. SMILLIE ASAP!!!!</div>
+<?php endif; ?>
 </div> <!-- end sidebar -->
 <?php endif; ?>
 
@@ -583,4 +613,3 @@ document.addEventListener('DOMContentLoaded', () => {
 </body>
 
 </html>
-

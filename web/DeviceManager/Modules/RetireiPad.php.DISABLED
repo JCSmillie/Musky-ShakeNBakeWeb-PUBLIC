@@ -11,7 +11,7 @@ What you see here is pretty much just the PHP wrapper for it to work.  The real 
 
 ###NOTE THIS IS INCLUDED AS AN EXAMPLE.  I would imagine this would totally work if you had MOSBasic with IIQ Support enabled.  However I would bet your location identification numbers are different.  They would have to be traded out.
 
- -JCS 7/2/25
+
 
 */
 

@@ -1,4 +1,44 @@
 <?php
+// ------------------------------------------------------------
+// Ensure session is started
+// ------------------------------------------------------------
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+
+// ------------------------------------------------------------
+// Security headers (fallback in PHP in case Apache fails to apply them)
+// These headers protect against common web attacks like XSS,
+// clickjacking, and MIME sniffing
+// ------------------------------------------------------------
+@header("X-Content-Type-Options: nosniff");
+@header("X-Frame-Options: DENY");
+@header("X-XSS-Protection: 1; mode=block");
+@header("Referrer-Policy: no-referrer");
+// ------------------------------------------------------------
+// Session timeout enforcement
+// Logs the user out after 1 hour of inactivity
+// ------------------------------------------------------------
+$timeout = 3600; // 1 hour
+if (isset($_SESSION['last_activity']) && time() - $_SESSION['last_activity'] > $timeout) {
+    session_unset();
+    session_destroy();
+    header("Location: /auth/expired.php"); // You can customize this page
+    exit;
+}
+$_SESSION['last_activity'] = time();
+
+// ------------------------------------------------------------
+// 2FA enforcement check
+// User must complete 2FA even if authenticated by Apache
+// ------------------------------------------------------------
+if (!isset($_SESSION['check_in'])) {
+    $redirectBack = urlencode($_SERVER['REQUEST_URI']);
+    header("Location: /secure/2fa-portal/login.php?return=$redirectBack");
+    exit;
+}
+
 // Prevent direct browser access
 if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME'])) {
     http_response_code(403);

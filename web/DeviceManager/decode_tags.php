@@ -25,6 +25,7 @@ $tagTranslations = [
   'Teacher' => 'iPad-TEACHER ASSIGNED',
   'UP-Loaner' => 'UP Loaner Pool Device',
   'RETIRED-2025' => 'RETIRED 2025',  
+  'HDK' => 'Help Desk Student, Respect.',
 ];
 
 if (!empty($parsedData['TAGS'])) {

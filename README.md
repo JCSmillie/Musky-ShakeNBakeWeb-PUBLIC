@@ -5,6 +5,7 @@ Musky is a home grown tool created to support our student help desk and faculty 
 
 Musky went live at Gateway School District for production use in April 2025 almost one year from when the first line of code was written to see if I could do any of this.  Its actively deployed still today and will be utilized by Faculty next year in addition to our Help Desk kids.
 
+
 # Why was Musky Created?
 Winter 2024 we noticed that there was a significant delay between when ASM learned of new students and when those students would be available to assign a new device to.  So effectly, at the time by hand, you would do the following:
 1. Go to IncidentIQ (ticket system,) lookup the student who needs the device, assign device in IIQ.
@@ -14,8 +15,33 @@ As you can imagine this creates backlog because if the student doesn't exist in 
 
 <!-- NOTE --> Both assign.cgi and wipeRTS.cgi are in the Example directory.  They are definately NOT drop in and use as they depend on MOSBasic and some other custom stuff not published.  I list these files only to show you how easily this can all be done.
 
+## 🔧 Purpose
 
-Something else I should mention and its where this project gets it's name from.  My Father, George E. Smillie, had a nasty health episode that started in September 23' which pretty much ensured my sister and I were daily visitors to a hospital and spending hours with our Dad at his bed side.  assign.cgi and wipeRTS.cgi was written, tested, and whatever else during this time.  I can pretty much tell you I was at Selec t Specialty in Latrobe Hospital when these were created.  My father passed in April 2024.  The mind and heart were so willing but the rest of his body just couldn't do it anymore.  My Dad's nickname was Musky in reference to a muskrat.  I never got a chance to get to the bottom of that nickname, but as this project is dedicated to my dad the name seemed proper.  The logo is what chat GPT thinks my dad would look like as a Muskrat.  
+Musky bridges the gap between complex backend tools and fast-paced, front-line support needs. It's designed for IT staff and field technicians to:
+
+- Instantly locate and triage devices
+- View assignment, check-in, IP beat, and tag metadata
+- Trigger device actions (Wipe, Lost Mode, Restart, etc.)
+- Integrate live data from the Mist API for wireless positioning
+
+---
+
+## 🧱 What Musky Is *Not*
+
+- It is *not* another abstract MDM UI.
+- It is *not* meant to replace IT — it's a guided, opinionated front-end to known-good workflows.
+- It is *not* interested in IIQ or other systems changing your data. Musky reads, acts, logs — but it doesn't allow your data to be silently altered behind the scenes.
+
+---
+## 🧭 Philosophy and Origin
+
+Musky was born out of necessity — built during a time of personal hardship and institutional challenge. The goal was to empower not only IT staff, but also secretaries and student help desk members who may not know every detail of MDMs, network topology, or ticketing logic — but *still need to take action confidently and quickly*.
+
+It simplifies workflows, decodes obscure tags, and provides real-world guidance in clear, actionable terms — giving a 6th-grade help desk student the tools to succeed on their first ticket and giving building secretaries the ability to deploy or recover iPads without having to know every backend system.
+
+This project emerged from real-world constraints and was battle-tested during moments when downtime wasn't an option — including full reliance on it while its creator was bedside caring for a parent. Its design reflects this: resilient, direct, and human-centered.
+
+---
 
 ## How was Musky Created?
 So not to toot my own horn too much but I'm pretty decent at shell languages.  I've been writing shell scripts for a very long time, however I have absolutely no PHP game.  To fill in my gaps I have used ChatGPT to create the majority of the PHP code you see.  All the shell scripts depended on as well as MOSBasic have no ChatGPT in them.  Back before the internet was so vast I was into CircleMUDs.  When it came time to build our own MUD I learned what I needed to know about C+ by looking at other people's code (posted to the CircleMUD mailing list,) hack it to do something different, and keep hacking at it until it did what I wanted it to do.  I feel this is pretty much the same thing.  I tell ChatGPT how my script works, how I want it interacted with, and it puts out the code.  I use GitHub Desktop so I can easily compare changes to understnad what changed and why.  Over time of doing this I'm starting to pickup **SOME** PHP knowledge and even correcting my own errors as we go along but it will be a long time before I can just write some PHP.  That being said I see nothing wrong with using AI to code as long as you proof read and try to understand what it happening to the best of your knowledge.  Working with ChatGPT is like having a conversation with an amazingly smart person who has no real world skill set and often makes simple mistakes.  You have to read along and catch those mistakes, but the code is completely usable.
@@ -25,6 +51,16 @@ So not to toot my own horn too much but I'm pretty decent at shell languages.  I
 ## Prerequisits:
 * Linux server with Apache to run MOSBasic and Musky out of.  
 * MOSBasic installed, configured, and tested to be working.
+
+## 🧠 Core Dependencies
+
+- **MOSBasic**: ZSH-based CLI for Mosyle API interaction
+- **IncidentIQ Webhooks**: Used for triggering real-time assignment workflows
+- **Mist API**: Optional, but provides powerful enrichment for device location
+- **Apache/PHP**: Web server base, CGI for secure script execution
+
+---
+
 
 Files to Edit to make this work in your environment:
 The following files must be edited for your environment.  Files are heavily commented:
@@ -38,7 +74,38 @@ Open up your browser to whereeveryouputit/index.php and away you go.
 ## SECURING ACCESS:
 Musky pages support .htaccess restrictions and is the recommended way to set this up.  Onsite (and in various places in the code comments) you can see I have our own 2FA solution tied in there.  That documentaion will not be provided at this time.  Search for apache .htaccess; you should find a ton of info.
 
+### 🔒 Auth / Security
 
+- All actions are restricted behind web authentication (`check_access.php`)
+- Device control logs are saved with timestamp, IP, and username
+- Optional user theme preferences stored in SQLite
+
+## 📦 Folder Structure
+
+```
+DeviceManager/
+├── index.php                # Main device lookup page
+├── decode_tags.php         # Human-friendly tag translations
+├── load_modules.php        # Lists module buttons
+├── run_modules.php         # Executes selected module
+├── Modules/
+│   └── *.php               # Optional 3rd party tools
+├── DataSources/            # Mist API JSON dumps & enrichment maps
+│   ├── mac_to_apname_map.json
+│   ├── bssid_to_apname_map.json
+│   ├── client_lastseen_map.json
+│   └── ...
+```
+
+---
+
+## 🧪 Debugging and Reporting
+At any time while accessing the interface if a problem is found click the PROBLEM button left corner and submit the issue.  A screenshot of how Musky appeared at the time of submission will also be taken.
+
+- **Debug** pane reveals the last shell command and output
+- **PROBLEM** button allows the user to submit screenshots and issues with metadata for triage
+
+---
 
 # Pages Available:
 This is the landing page.  Not much to look at:
@@ -59,7 +126,19 @@ This is the core of what will become the Musky suite.  This page (**PROJECT**/We
 
 And in the bottom left corner the PROBLEM button for reporting issues.  This button is special in that when clicked a popup will appear asking you the issue.  You type and submit.  The submission is then emailed to the address listed in config.php with a screenshot of how Musky was as of the report.  
 
-## Loaners Page
+## ⚠️ STOLEN Mode
+
+If a decoded tag equals `STOLEN`, Musky enforces a lockdown:
+
+- All sidebar buttons are **disabled**
+- 3rd Party Modules section is hidden
+- A loud banner reads:  
+  **“CONTACT MR. SMILLIE ASAP!!!!”**
+
+This behavior is hardcoded for immediate attention and loss recovery workflow compliance.
+
+
+### Loaners Page
 <img src="https://github.com/JCSmillie/Musky-ShakeNBakeWeb-PUBLIC/blob/main/Imagery/LoanerView.png" alt="Loaner Device View." width="600"/>
 This page allows group actions.  Mainly used to get a list of preselected groups and then you can click the assset tag to get more info on that particular device:  Buttons available are:
 * Mass Wipe Selected
@@ -91,3 +170,33 @@ In Device Manager there is a section titled 3rd Party Modules.  Placing a PHP fi
 * Expanded/additional logging.
 * Write 3rd party Module guide
 * DOCUMENT TONS OF STUFF.
+- Apple Sign-in or internal SSO
+- Classroom View Panel for teachers
+- Device Status Groups (e.g., In Storage, Needs Update, etc.)
+- Configurable user themes and homepage preferences
+- Branded install mode for other school districts
+
+
+
+
+
+## 📅 Timeline and Impact
+
+- **2020:** Loaner control systems evolved during the district-wide Mosyle rollout and pandemic response
+- **2023:** Health and staffing crises pushed the need for web-based automation
+- **2024:** `assign.cgi` and `wipeit.cgi` introduced, enabling true loaner automation and webhook integration
+- **2025:** Musky formalized into its current web interface, with Mist integration, tag decoding, and student-friendly UI
+
+---
+## 🏁 Release 1 Goals
+
+- ✅ Basic authentication (IT, HDK students, secretaries)
+- ✅ Basic device control (Lost Mode, Wipe, Assign, etc.)
+- ✅ Loaner Management Panel
+- ✅ “Anyone Pane” (facts-only view via serial number)
+- ✅ Initial landing page (with goal of dashboard-style insights)
+- ✅ General documentation
+
+---
+## 📞 Contact
+This project is maintained by Jesse C. Smillie.  
