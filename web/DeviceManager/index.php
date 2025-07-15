@@ -309,7 +309,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || isset($_GET['assettag'])) {
 // ===================
 if (!empty($parsedData)) {
     write_log("Page Loaded | Asset: {$parsedData['ASSETTAG']} | Serial: {$parsedData['DeviceSerialNumber']}");
-
+    $_SESSION['last_lookup'] = $parsedData;
     echo "<h2>" . htmlspecialchars($parsedData['ASSETTAG'] ?? 'Unknown Asset') . "</h2>";
 
     if (!empty($parsedData['USERID'])) {

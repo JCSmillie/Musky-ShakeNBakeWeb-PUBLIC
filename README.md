@@ -79,7 +79,8 @@ So not to toot my own horn too much but I'm pretty decent at shell languages.  I
      Options Indexes
  </Directory>
 ```
-##Musky Configs to Edit:
+
+## Musky Configs to Edit:
 Files to Edit to make this work in your environment:
 The following files must be edited for your environment.  Files are heavily commented:
 * <MUSKY-Repo>/web/DeviceManager/decode_tags.php <-List of any notable tags (as they appear in Mosyle) and what should be displayed if that tag is found.

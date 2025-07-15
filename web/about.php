@@ -108,10 +108,18 @@ $serverIP = $_SERVER['SERVER_ADDR'] ?? 'Unknown';
 </td></tr>
 <tr><td>Last Problem Report:</td><td><?php echo htmlspecialchars($lastProblemReport); ?></td></tr>
 </table>
+<div style="max-width: 600px; margin: 0 auto; text-align: left;">
+  <p>The MUSKY Suite/tools/system/etc whatever you would like to call it is dedicated to memory of my Dad, George E. Smillie (1955-2024.)  An avid bowler and Family man my Dad's true passion was food and he enjoyed helping people.  He honed these skills working for G.C. Murphy Co early in his life washing dishes and making hoagies.  With hardwork and great attention to quality he worked his way up the ranks to eventually Manager and gained a reputation through out the company for fixing loss leading restaurants inside G. C. Murphy Co and Murphy Mart stores and making them profitable again.  In 1995 he was transfered back to Western PA where he would find the location where he would open his own restarant, Smillie's Family Restaurant, in Mt. Plesant, PA November 1995.  The restaurant would be the defining family project for years and as George's personal family grew through marriages and grandchildren he kept his nose to the grind stone.  Always trying to make great food at decent prices.  George felt that a family man, like himself, should be able to go out to Dinner with the family and not morgage your house to do it.  Cheap food, but not cheap quaility and still doing things his way up until he passed in April 2024.</p>
 
-<div style="text-align: center; margin-top: 20px; font-family: sans-serif; color: #777;">
-    <?php echo DEDICATION_MESSAGE; ?>
+  <p>The underpins of this project were started while I sat with my dad, George, in his final months.  A combination of keeping my mind busy with so much unknown and trying to be helpful to Jennifer Czyzewski who held down my day job at Gateway School District while I spend that last time with him. </p>
+
+  <p>Its hard to put a whole person into a short paragraph or two so understand that regardless there is so so much more to my dad then I could ever fit to type here.  As a parting thought I also want you to know that my mom often called my dad Musky enderingly.  Our mascot, Musky, is the flag bearer of this project.</p>
+
+  <p>Also to the ones crawling under desks, tracing cables in ceilings, and answering helpdesk tickets while juggling firmware updates — this one's for you.</p>
+
+  <p>Your effort matters. Your uptime is seen. And this project exists because of the standards you uphold, even when no one’s watching.</p>
 </div>
+
 
 <p><a href="/index.php">Return to Device Manager</a></p>
 

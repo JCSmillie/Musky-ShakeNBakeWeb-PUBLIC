@@ -21,6 +21,7 @@ OTP/
 .git/
 .gitattributes
 .gitignore
+.github/
 
 # Archives and logs
 *.zip
