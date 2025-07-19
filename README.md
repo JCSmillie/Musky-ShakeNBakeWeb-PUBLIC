@@ -1,5 +1,12 @@
 <img src="https://github.com/JCSmillie/Musky-ShakeNBakeWeb-PUBLIC/blob/main/mascot.png?raw=true" alt="Musky our Fearless Mascot." width="200"/>
 
+# Hay PSU MacAdmins 2025
+Thank you for hanging out with me and Musky.  Sorry the session didn't go longer.  The two power flickers through me off a little and made me double think a few demos I wanted to do, but thats ok.  In a few days I'll post a few videos to show what Musky does and I'm also working on a Docker for quick usage that outside of adding a few API keys your ready to go.
+
+Again thanks!
+-Jesse
+
+
 # What is Musky?
 Musky is a home grown tool created to support our student help desk and faculty who support iPads. In its current configuration the goal is to provide a tool that lets our help desk students experience "Quick Wins" when helping end users with technology problems.  Finding iPads is one of the most common reasons people come to the help desk.  Musky has an extremely easy Lost device ability.  
 
