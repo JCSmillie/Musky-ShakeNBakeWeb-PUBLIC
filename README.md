@@ -1,7 +1,9 @@
 <img src="https://github.com/JCSmillie/Musky-ShakeNBakeWeb-PUBLIC/blob/main/mascot.png?raw=true" alt="Musky our Fearless Mascot." width="200"/>
 
-# Hay PSU MacAdmins 2025
+# Hay PSU MacAdmins 2025 UPDATED 7/21/25
 Thank you for hanging out with me and Musky.  Sorry the session didn't go longer.  The two power flickers through me off a little and made me double think a few demos I wanted to do, but thats ok.  In a few days I'll post a few videos to show what Musky does and I'm also working on a Docker for quick usage that outside of adding a few API keys your ready to go.
+
+All weekend I have been working on a Docker image that will combine MOSBasic and MUSKY and hopefully get it down to the point of run script, launch docker, go check it out...  I'm very very close.  Sadly its too late tonight to keep going but within a few days, promise, its coming!
 
 Again thanks!
 -Jesse
