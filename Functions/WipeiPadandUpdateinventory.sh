@@ -11,7 +11,7 @@
 # JCS - I know I wrote it, but no idea when.
 # JCS - 04/03/2025
 BAGCLI_WORKDIR=$(readlink /usr/local/bin/mosbasic)
-#Remove our command name from the ou	 above
+#Remove our command name from the  above
 BAGCLI_WORKDIR=${BAGCLI_WORKDIR//mosbasic/}
 
 export BAGCLI_WORKDIR
@@ -21,7 +21,11 @@ source "$BAGCLI_WORKDIR/config"
  #shellcheck source=common
 . "$BAGCLI_WORKDIR/common"
 
-source "/AddonStorage/webcontent/MuskyFunctions/IIQ_Support_Functions.sh"
+
+#source Helper File locations
+LOCATION_SCRIPT_PATH=$(grep "^\$LOCATION_SCRIPT_PATH" ../web/config.php | sed -E "s/^\$LOCATION_SCRIPT_PATH\s*=\s*'([^']+)'.*/\1/")
+source "$LOCATION_SCRIPT_PATH/IIQ_Support_Functions.sh"
+#source "/AddonStorage/webcontent/MuskyFunctions/IIQ_Support_Functions.sh"
 #source "/Users/jsmillie/GitHub/Musky-ShakeNBakeWeb/Functions/IIQ_Support_Functions.sh"
 
 #IIQ Variables

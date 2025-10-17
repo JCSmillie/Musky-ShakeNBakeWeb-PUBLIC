@@ -11,6 +11,10 @@ Functions/Utility/.breadcrumb
 Functions/Utility/*.json
 Functions/Utility/raw_dumps/
 config.php
+CHANGELOG.md
+nora_config.json
+sso_user_bridge.php
+web/SSO/Google/
 
 # Temporary or local dev content
 web/DeviceManager/test.php
@@ -29,3 +33,6 @@ OTP/
 
 # Files explicitly marked as private
 *PRIVATE*
+*GSD-TierI*
+*GSD-TierII*
+*GSD-TierIII*

@@ -2,7 +2,7 @@
 #
 # Return location link per Mosyle IF unit is in lost mode.
 DeviceSerialNumber="$1"	
-#DeviceSerialNumber="F9FG4EXKQ1GC"
+
 #MOSBasic scripts are used here and relied on
 BAGCLI_WORKDIR=$(readlink /usr/local/bin/mosbasic)
 #Remove our command name from the ou	 above

@@ -6,7 +6,7 @@
 // =====================================================================
 
 require_once('../config.php');
-require_once('loaner_constants.php');
+require_once('../loaner_constants.php');
 
 header('Content-Type: text/plain');
 header('X-Accel-Buffering: no');
@@ -24,7 +24,7 @@ if (empty($choice) || !isset(LOANER_POOLS[$choice])) {
 $LoanerPool2Search = LOANER_POOLS[$choice];
 
 // Build correct shell command
-$scriptPath = $LOCATION_SCRIPT_PATH . 'LoanerData.sh ' . escapeshellarg($LoanerPool2Search);
+$scriptPath = $LOCATION_SCRIPT_PATH . '/LoanerData.sh ' . escapeshellarg($LoanerPool2Search);
 
 // Open script for reading
 $process = popen($scriptPath, 'r');

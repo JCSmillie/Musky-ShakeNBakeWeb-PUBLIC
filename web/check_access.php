@@ -1,96 +1,75 @@
 <?php
-// ------------------------------------------------------------
-// Ensure session is started
-// ------------------------------------------------------------
+// ============================================================================
+// MUSKY Access Control Middleware (Updated for SSO)
+// -----------------------------------------------------------------------------
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-
-// ------------------------------------------------------------
-// Security headers (fallback in PHP in case Apache fails to apply them)
-// These headers protect against common web attacks like XSS,
-// clickjacking, and MIME sniffing
-// ------------------------------------------------------------
-@header("X-Content-Type-Options: nosniff");
-@header("X-Frame-Options: DENY");
-@header("X-XSS-Protection: 1; mode=block");
-@header("Referrer-Policy: no-referrer");
-// ------------------------------------------------------------
-// Session timeout enforcement
-// Logs the user out after 1 hour of inactivity
-// ------------------------------------------------------------
-$timeout = 3600; // 1 hour
-if (isset($_SESSION['last_activity']) && time() - $_SESSION['last_activity'] > $timeout) {
-    session_unset();
-    session_destroy();
-    header("Location: /auth/expired.php"); // You can customize this page
-    exit;
-}
-$_SESSION['last_activity'] = time();
-
-// ------------------------------------------------------------
-// 2FA enforcement check
-// User must complete 2FA even if authenticated by Apache
-// ------------------------------------------------------------
-if (!isset($_SESSION['check_in'])) {
-    $redirectBack = urlencode($_SERVER['REQUEST_URI']);
-    header("Location: /secure/2fa-portal/login.php?return=$redirectBack");
-    exit;
-}
-
-// Prevent direct browser access
-if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME'])) {
-    http_response_code(403);
-    exit("Access denied.");
-}
+header("X-Content-Type-Options: nosniff");
+header("X-Frame-Options: DENY");
+header("X-XSS-Protection: 1; mode=block");
+header("Referrer-Policy: no-referrer");
 
 require_once __DIR__ . '/config.php';
-
 if (!empty($TWO_FA_CONFIG_PATH) && file_exists($TWO_FA_CONFIG_PATH)) {
     require_once $TWO_FA_CONFIG_PATH;
+}
 
-    if (!empty($ENABLE_2FA)) {
-        $returnUrl = $_SERVER['REQUEST_URI']; // includes path and query string
-        $returnParam = urlencode($returnUrl);
-        $loginPage = rtrim($TWO_FA_PORTAL_URL, '/') . "/login.php?return=$returnParam";
+$ENABLE_2FA = isset($ENABLE_2FA) && strtolower($ENABLE_2FA) === 'true';
 
-        // Start session and populate REMOTE_USER
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
+// -----------------------------------------------------------------------------
+// Idle timeout
+// -----------------------------------------------------------------------------
+$idleTimeout = $SESSION_TIMEOUT ?? 1800;
+if (isset($_SESSION['last_active']) && time() - $_SESSION['last_active'] > $idleTimeout) {
+    session_unset();
+    session_destroy();
 
-        if (!empty($_SESSION['username'])) {
-            $_SERVER['REMOTE_USER'] = $_SESSION['username']; // 🛠 simulate Apache-style tracking
-        }
+    // Redirect to login with a friendly timeout message
+    $msg = urlencode("Session expired due to inactivity. Please log in again.");
+    header("Location: /auth/login.php?expired=1&msg=$msg");
+    exit;
+}
+$_SESSION['last_active'] = time();
 
-        $now = date('[Y-m-d H:i:s]');
-        $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-        $logPath = $SESSION_LOG_PATH ?? '/tmp/2fa_session_log.txt';
+// -----------------------------------------------------------------------------
+// Redirect target
+// -----------------------------------------------------------------------------
+$returnUrl = urlencode($_SERVER['REQUEST_URI']);
+$loginPage = ($ENABLE_2FA && isset($TWO_FA_PORTAL_URL))
+    ? rtrim($TWO_FA_PORTAL_URL, '/') . "/login.php?return=$returnUrl"
+    : "/auth/login.php?return=$returnUrl";
 
-        // Not logged in yet? Redirect to 2FA portal
-        if (empty($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-            file_put_contents($logPath, "$now LOGIN REDIRECT: $ip to $loginPage\n", FILE_APPEND);
-            header("Location: $loginPage");
-            exit;
-        }
+// -----------------------------------------------------------------------------
+// Allow login via:
+// - Legacy internal session (`logged_in`)
+// - OR Musky SSO (`musky_user` with valid email)
+// -----------------------------------------------------------------------------
+$is_internal_login = !empty($_SESSION['logged_in']) && $_SESSION['logged_in'] === true;
+$is_sso_login = !empty($_SESSION['musky_user']['email']) && filter_var($_SESSION['musky_user']['email'], FILTER_VALIDATE_EMAIL);
 
-        // Session timeout check
-        $lastActive = $_SESSION['last_active'] ?? 0;
-        if (time() - $lastActive > ($SESSION_TIMEOUT ?? 1800)) {
-            file_put_contents($logPath, "$now SESSION EXPIRED: {$_SESSION['username']} ($ip)\n", FILE_APPEND);
-            session_destroy();
-            header("Location: $loginPage");
-            exit;
-        }
-
-        // First-time login session logging
-        if (empty($_SESSION['was_logged'])) {
-            $_SESSION['was_logged'] = true;
-            file_put_contents($logPath, "$now LOGIN SUCCESS: {$_SESSION['username']} ($ip)\n", FILE_APPEND);
-        }
-
-        // Refresh session timestamp
-        $_SESSION['last_active'] = time();
+// Enforce login (with 2FA check if applicable)
+if ($ENABLE_2FA) {
+    if (empty($_SESSION['check_in']) || (!$is_internal_login)) {
+        header("Location: $loginPage");
+        exit;
     }
+} else {
+    if (!$is_internal_login && !$is_sso_login) {
+        if (basename($_SERVER['PHP_SELF']) !== basename($loginPage)) {
+            header("Location: $loginPage");
+            exit;
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+// Always populate REMOTE_USER for downstream scripts
+// -----------------------------------------------------------------------------
+if (!empty($_SESSION['username'])) {
+    $_SERVER['REMOTE_USER'] = $_SESSION['username'];
+} elseif (!empty($_SESSION['musky_user']['email'])) {
+    $_SERVER['REMOTE_USER'] = $_SESSION['musky_user']['email'];
 }

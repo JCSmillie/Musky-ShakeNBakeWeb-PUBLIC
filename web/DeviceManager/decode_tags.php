@@ -12,6 +12,7 @@ $tagTranslations = [
   'Ele_Allow_Camera' => 'K-4 Camera Always On',
   'EV-Loaner' => 'EV Loaner Pool Device',
   'GMS-Loaner' => 'GMS Loaner Pool Device',
+  'RAM-Loaner' => 'Ramsey Ele Loaner Pool Device',
   'GSDIT-Loaner' => 'GSD IT Loaner Pool Device',
   'HomeSchool' => 'Student Home Schooled',
   'InStorage' => 'IIQ says undeployed',
@@ -24,6 +25,7 @@ $tagTranslations = [
   'Staff' => 'iPad-STAFF ASSIGNED',
   'Teacher' => 'iPad-TEACHER ASSIGNED',
   'UP-Loaner' => 'UP Loaner Pool Device',
+  'DaNewz' => 'Ele Student News Team',
   'RETIRED-2025' => 'RETIRED 2025',  
   'HDK' => 'Help Desk Student, Respect.',
 ];

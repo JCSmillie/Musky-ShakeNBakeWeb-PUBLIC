@@ -110,17 +110,16 @@ th {
 /* ===============================
    Other Elements
    =============================== */
-#lastRefreshed, #loadingOverlay, #problemButton, .corner-image {
+#loadingOverlay,
+#problemButton,
+.corner-image {
     position: fixed;
     z-index: 1000;
 }
 #lastRefreshed {
-    top: 10px;
-    left: 10px;
-    background: rgba(255,255,255,0.7);
-    padding: 5px 10px;
-    border-radius: 5px;
-    font-size: 12px;
+    font-weight: bold;
+    font-size: 13px;
+    margin-bottom: 10px;
 }
 #problemButton {
     bottom: 10px;

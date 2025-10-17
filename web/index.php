@@ -1,167 +1,248 @@
 <?php
 session_start();
+require_once 'config.php';
+require_once 'check_access.php';
 
-define('SQLITE_PATH', '/etc/httpd/2Fa/MUSKY2FA.db');
-$TWO_FA_PORTAL_URL = $TWO_FA_PORTAL_URL ?? '/2fa';
-
-$username = $_SESSION['username'] ?? '';
-
-// Fallback theme
-$theme = 'light-mode';
-
-// Shared SQLite connection
-$db = new SQLite3(SQLITE_PATH);
-$db->busyTimeout(3000);
-
-// Load user's theme if possible
-if ($username !== '') {
-    $stmt = $db->prepare("SELECT theme FROM users_2fa WHERE username = :username");
-    $stmt->bindValue(':username', $username, SQLITE3_TEXT);
-    $result = $stmt->execute();
-    if ($result && ($row = $result->fetchArray(SQLITE3_ASSOC))) {
-        if (!empty($row['theme'])) {
-            $theme = $row['theme'];
-        }
-    }
-    if ($result) $result->finalize();
+$user = $_SESSION['musky_user'] ?? null;
+if (!$user) {
+    die("No valid user session.");
 }
 
+$email     = $user['email'] ?? 'unknown';
+$firstName = $user['first_name'] ?? '';
+$pic       = $user['photo_url'] ?? null;
+$name      = $user['full_name'] ?? ($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '');
+$role      = $user['role'] ?? 'unknown';
+$building  = $user['building'] ?? 'unknown';
+$allowed   = $user['allowed_tools'] ?? 'none';
+$tools     = array_map('trim', explode(',', $allowed));
+
+$can_loaners     = in_array('LOANER_MGMT', $tools) || in_array('ALL_TOOLS', $tools);
+$can_devicemgr   = in_array('DEVICE_MANAGER', $tools) || in_array('ALL_TOOLS', $tools);
+$can_adminpanel  = in_array('ADMIN_PANEL', $tools) || in_array('ALL_TOOLS', $tools);
+$can_experimental  = in_array('EXPERIMENTAL', $tools) || in_array('ALL_TOOLS', $tools);
+
+// Load theme from musky_users
+$theme = 'light-mode';
+$db = new SQLite3($SQLITE_PATH);
+$db->busyTimeout(3000);
+
+$stmt = $db->prepare("SELECT theme FROM musky_users WHERE email = ?");
+$stmt->bindValue(1, $email);
+$result = $stmt->execute();
+if ($result && ($row = $result->fetchArray(SQLITE3_ASSOC))) {
+    if (!empty($row['theme'])) {
+        $theme = $row['theme'];
+    }
+}
+if ($result) $result->finalize();
+
 // Handle theme update
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['theme']) && $username !== '') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['theme'])) {
     $newTheme = $_POST['theme'];
-    $stmt = $db->prepare("UPDATE users_2fa SET theme = :theme WHERE username = :username");
-    $stmt->bindValue(':theme', $newTheme, SQLITE3_TEXT);
-    $stmt->bindValue(':username', $username, SQLITE3_TEXT);
+    $stmt = $db->prepare("UPDATE musky_users SET theme = ? WHERE email = ?");
+    $stmt->bindValue(1, $newTheme);
+    $stmt->bindValue(2, $email);
     $stmt->execute();
     $_SESSION['theme'] = $newTheme;
     $db->close();
     echo json_encode(['success' => true]);
     exit;
 }
-
 ?>
-
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Device Management Hub</title>
-    <link rel="stylesheet" href="theme.css">
-    <style>
-        .nav-links {
-            margin: 20px 0;
-        }
+  <meta charset="UTF-8" />
+  <title>Musky Hub</title>
+  <link rel="stylesheet" href="theme.css?theme=<?= htmlspecialchars($theme) ?>" />
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .content {
+      display: flex;
+      flex: 1;
+    }
+    .main {
+      flex: 1;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar {
+      width: 240px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .mascot img {
+      width: 100px;
+      margin-top: auto;
+    }
+    .logoff {
+      margin-top: 10px;
+    }
+    .problem-button {
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      z-index: 1000;
+      background: red;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .theme-switcher {
+      width: 100%;
+    }
+    .theme-switcher select {
+      width: 100%;
+      font-size: 1rem;
+      margin-top: 5px;
+    }
+    .theme-switcher label {
+      font-size: 1.05rem;
+      font-weight: bold;
+      font-family: "Segoe UI", sans-serif;
+      display: block;
+      margin-top: 1rem;
+      margin-bottom: 0.4rem;
+      text-align: left;
+    }
+    .tool-link {
+      display: block;
+      font-size: 1.3rem;
+      font-weight: bold;
+      padding: 14px;
+      text-align: center;
+      border-radius: 8px;
+      text-decoration: none;
+      margin-bottom: 12px;
+      background-color: #4CAF50;
+      color: white;
+      transition: background-color 0.3s;
+    }
+    .tool-link:hover {
+      background-color: #45a049;
+    }
+    body.gator-time-mode .tool-link {
+      background-color: #C5B358;
+      color: #000;
+    }
+    body.gator-time-mode .tool-link:hover {
+      background-color: #b8a647;
+    }
+  </style>
+  <script>
+    function logoff() {
+      fetch("logout.php").then(() => {
+        window.location.href = "/auth/login.php";
+      });
+    }
 
-        .nav-links a {
-            display: block;
-            padding: 10px;
-            margin: 5px 0;
-            font-size: 1.1rem;
-            text-decoration: none;
-            background: #4CAF50;
-            color: white;
-            border-radius: 5px;
-            text-align: center;
-        }
+    function reportProblem() {
+      const desc = prompt("Describe the problem you're experiencing:");
+      if (!desc) return;
+      const fd = new FormData();
+      fd.append('source_page', 'index.php');
+      fd.append('description', desc);
+      fd.append('browser_info', navigator.userAgent);
+      fd.append('username', <?= json_encode($email) ?>);
+      fetch("submit_problem.php", { method: 'POST', body: fd }).then(() => {
+        alert("Thanks for your report!");
+      });
+    }
 
-        .nav-links a:hover {
-            background: #45a049;
-        }
+    function changeTheme(theme) {
+      localStorage.setItem('selectedTheme', theme);
+      document.body.className = theme;
+      const fd = new FormData();
+      fd.append('theme', theme);
+      fetch('', { method: 'POST', body: fd });
+    }
 
-        .top-right {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            text-align: right;
-        }
-
-        .theme-select {
-            margin-bottom: 10px;
-            font-size: 1rem;
-            padding: 6px;
-            border-radius: 5px;
-        }
-
-        .action-button {
-            width: auto;
-        }
-
-        .action-button.red {
-            background-color: red;
-        }
-
-        .action-button.red:hover {
-            background-color: darkred;
-        }
-    </style>
-    <script>
-        function setTheme(theme) {
-            document.body.className = theme;
-            fetch("", {
-                method: "POST",
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: "theme=" + encodeURIComponent(theme)
-            });
-        }
-
-        function onThemeChange(selectElement) {
-            setTheme(selectElement.value);
-        }
-
-        function logoff() {
-            const returnUrl = encodeURIComponent("<?= $_SERVER['REQUEST_URI'] ?>");
-            const loginPage = "<?= rtrim($TWO_FA_PORTAL_URL, '/') ?>/login.php?return=" + returnUrl;
-            fetch("logout.php").then(() => {
-                window.location.href = loginPage;
-            });
-        }
-
-        function showProblemBox(source) {
-            const desc = prompt("Describe the problem you're experiencing:");
-            if (desc) {
-                const xhr = new XMLHttpRequest();
-                xhr.open("POST", "submit_problem.php", true);
-                xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-                xhr.send("source_page=" + encodeURIComponent(source)
-                    + "&description=" + encodeURIComponent(desc)
-                    + "&browser_info=" + encodeURIComponent(navigator.userAgent)
-                    + "&username=" + encodeURIComponent("<?= $username ?>"));
-                alert("Thanks for your report!");
-            }
-        }
-    </script>
+    window.onload = function() {
+      const savedTheme = <?= json_encode($theme) ?>;
+      document.body.className = savedTheme;
+      const themeSelect = document.getElementById('theme-select');
+      if (themeSelect) {
+        themeSelect.value = savedTheme;
+      }
+    };
+  </script>
 </head>
 <body class="<?= htmlspecialchars($theme) ?>">
 
-<div class="top-right">
-    <select class="theme-select" onchange="onThemeChange(this)">
-        <option value="light-mode" <?= $theme === 'light-mode' ? 'selected' : '' ?>>Light</option>
-        <option value="dark-mode" <?= $theme === 'dark-mode' ? 'selected' : '' ?>>Dark</option>
-        <option value="musky-mode" <?= $theme === 'musky-mode' ? 'selected' : '' ?>>Musky</option>
-        <option value="gator-time-mode" <?= $theme === 'gator-time-mode' ? 'selected' : '' ?>>Gator Time</option>
-    </select>
-    <br>
-    <button class="action-button" onclick="logoff()">Log Off</button>
-</div>
+<div class="content">
 
-<div class="main">
-    <h1>📱 Device Management Hub</h1>
+  <div class="main">
+    <h1>👋 Welcome<?= $firstName ? ', ' . htmlspecialchars($firstName) : '' ?>!</h1>
 
-    <div class="nav-links">
-        <a href="Loaners/index.php">📋 Loaner Management</a>
-        <a href="DeviceManager/index.php">🔧 Device Management</a>
+    <div style="display:flex; align-items:center; margin-bottom:1.5rem;">
+      <?php if (!empty($pic)): ?>
+        <img src="<?= htmlspecialchars($pic) ?>" alt="User Picture"
+             style="width:72px; height:72px; border-radius:50%; margin-right:20px;">
+      <?php endif; ?>
+      <div>
+        <strong style="font-size:1.2em;">My Details</strong><br>
+        Name: <?= htmlspecialchars($name ?: 'N/A') ?><br>
+        Email: <?= htmlspecialchars($email ?: 'N/A') ?><br>
+        Role: <?= htmlspecialchars($role ?: 'N/A') ?><br>
+        Building: <?= htmlspecialchars($building ?: 'N/A') ?><br>
+        Allowed Tools: <?= htmlspecialchars($allowed ?: 'N/A') ?>
+      </div>
     </div>
 
-    <hr>
+    <h1>📱 Device Management Hub</h1>
 
-    <button class="action-button red" onclick="showProblemBox('index.php')">PROBLEM</button>
+    <?php if ($can_experimental): ?>
+      <a href="DeviceManager/MyDevices.php" class="tool-link">📋 Devices Assigned to Me!!!!</a>
+    <?php endif; ?>
+    <?php if ($can_loaners): ?>
+      <a href="Loaners/index.php" class="tool-link">📋 Loaner Management</a>
+    <?php endif; ?>
+
+    <?php if ($can_devicemgr): ?>
+      <a href="DeviceManager/index.php" class="tool-link">🔧 Device Management</a>
+    <?php endif; ?>
+
+    <?php if ($can_adminpanel): ?>
+      <h2 style="margin-top:2rem;">🧰 MUSKY Access Management</h2>
+      <a href="admin/musky_admin.php" class="tool-link">🛠 Admin Panel</a>
+    <?php endif; ?>
+  </div>
+
+  <div class="sidebar">
+    <div class="theme-switcher">
+      <label for="theme-select">🎨 Theme Select:</label>
+      <select id="theme-select" onchange="changeTheme(this.value)">
+        <option value="light-mode">Light</option>
+        <option value="dark-mode">Dark</option>
+        <option value="musky-mode">Musky Mode</option>
+        <option value="gator-time-mode">Gator Time</option>
+      </select>
+    </div>
+
+    <button class="logoff action-button" onclick="logoff()">Log Off</button>
+
+    <div class="mascot">
+      <img src="mascot.png" alt="Mascot" />
+    </div>
+  </div>
+
 </div>
 
-<!-- Mascot Image -->
-<img src="mascot.png" alt="Mascot" class="corner-image">
+<button class="problem-button" onclick="reportProblem()">PROBLEM</button>
 
 </body>
 </html>
-
-<?php
-$db->close(); // Always close your database connection
-?>

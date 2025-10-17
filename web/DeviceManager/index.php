@@ -1,46 +1,33 @@
 <?php
-require_once '../check_access.php';
+// ----------------------------------------------------------------------
+// Safe Session Start
+// ----------------------------------------------------------------------
+if (session_status() === PHP_SESSION_NONE) session_start();
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../check_access.php';
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-define('SQLITE_PATH', '/etc/httpd/2Fa/MUSKY2FA.db');
-$TWO_FA_PORTAL_URL = $TWO_FA_PORTAL_URL ?? '/2fa';
-
-$username = $_SESSION['username'] ?? '';
-
-// Fallback theme
-$theme = 'light-mode';
-
-// Shared SQLite connection
-$db = new SQLite3(SQLITE_PATH);
-$db->busyTimeout(3000);
-
-// Load user's theme if possible
-if ($username !== '') {
-    $stmt = $db->prepare("SELECT theme FROM users_2fa WHERE username = :username");
-    $stmt->bindValue(':username', $username, SQLITE3_TEXT);
-    $result = $stmt->execute();
-    if ($result && ($row = $result->fetchArray(SQLITE3_ASSOC))) {
-        if (!empty($row['theme'])) {
-            $theme = $row['theme'];
-        }
-    }
-    if ($result) $result->finalize();
-}
-
-// Handle theme update
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['theme']) && $username !== '') {
-    $newTheme = $_POST['theme'];
-    $stmt = $db->prepare("UPDATE users_2fa SET theme = :theme WHERE username = :username");
-    $stmt->bindValue(':theme', $newTheme, SQLITE3_TEXT);
-    $stmt->bindValue(':username', $username, SQLITE3_TEXT);
-    $stmt->execute();
-    $_SESSION['theme'] = $newTheme;
-    $db->close();
-    echo json_encode(['success' => true]);
+$tool_required = 'DEVICE_MANAGER';
+$allowed = explode(',', $_SESSION['musky_user']['allowed_tools'] ?? []);
+if (!in_array($tool_required, $allowed) && !in_array('ALL_TOOLS', $allowed)) {
+    http_response_code(403);
+    echo "⛔ Access Denied — Missing Required Tool: {$tool_required}";
     exit;
+}
+
+// -------------------------------
+// 1. Theme Loader (from DB)
+// -------------------------------
+$theme = 'light-mode';
+$email = $_SESSION['musky_user']['email'] ?? '';
+try {
+    $db = new PDO("sqlite:$SQLITE_PATH");
+    $stmt = $db->prepare("SELECT theme FROM musky_users WHERE email = ?");
+    $stmt->execute([$email]);
+    if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $theme = $row['theme'] ?? 'light-mode';
+    }
+} catch (Exception $e) {
+    // Fallback theme already set
 }
 
 ?>
@@ -189,21 +176,10 @@ function loadModule(name) {
 </style>
 </head>
 
-<body>
+<body class="<?= htmlspecialchars($theme) ?>">
 <div class="top-controls" style="display:flex;justify-content:space-between;align-items:center;margin:1em 0;">
-    <button onclick="window.location.href='../index.php'" style="background:#ccc;padding:0.5em 1em;border:none;border-radius:5px;cursor:pointer;">?? Return to Launch</button>
-    <div id="refresh-timer" style="font-weight:bold;">Last updated: just now</div>
-</div>
-
-
-<!-- Theme Switcher -->
-<div class="theme-switcher">
-  <select id="theme-select" onchange="changeTheme(this.value)">
-    <option value="light-mode">Light</option>
-    <option value="dark-mode">Dark</option>
-    <option value="musky-mode">Musky</option>
-    <option value="gator-time-mode">GatorTime</option>
-  </select>
+    <button onclick="window.location.href='../index.php'" style="background:#ccc;padding:0.5em 1em;border:none;border-radius:5px;cursor:pointer;">🔙 Return to Launch</button>    
+	<div id="refresh-timer" style="font-weight:bold;">Last updated: just now</div>
 </div>
 
 <!-- Mascot Icon -->
@@ -426,6 +402,14 @@ $lostModeStatus = strtoupper(trim($parsedData['LOSTMODESTATUS'] ?? ''));
   }
   ?>
 
+  <!-- Device Report Button -->
+  <?php
+  if (is_readable(__DIR__ . '/../nora_config.json')) {
+      $serial = htmlspecialchars($parsedData['DeviceSerialNumber'] ?? '');
+      echo '<button class="action-button" type="button" onclick="window.open(\'device_report.php?serial=' . $serial . '\', \'DeviceReport\', \'width=1000,height=800,resizable=yes,scrollbars=yes\');">Device Report</button>';
+  }
+  ?>
+  
   <!-- Play Sound and Show Location -->
   <?php
   if ($lostModeStatus === 'ENABLED' && $minutesSinceLastCheckIn < 2880) {
