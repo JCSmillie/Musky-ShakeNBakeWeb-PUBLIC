@@ -2,21 +2,109 @@
 // login.php - MUSKY Auth Interface (Unified Auth w/ Tool Permissions)
 
 session_start();
-require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../bootstrap.php';
+require_once __DIR__ . '/../../Functions/MuskyActivityLog.php';
+require_once __DIR__ . '/../../Functions/MuskyFirstTimeSetup.php';
+require_once __DIR__ . '/../../Functions/MuskyUserMariaSync.php';
+require_once __DIR__ . '/../../Functions/NoraConfigStore.php';
 
-$logPath = $SESSION_LOG_PATH ?? '/tmp/2fa_session_log.txt';
+if (!function_exists('musky_safe_return_path')) {
+    function musky_safe_return_path(?string $candidate, string $default = '/index.php'): string {
+        $candidate = trim((string)$candidate);
+        if ($candidate === '') {
+            return $default;
+        }
+
+        if ($candidate[0] !== '/') {
+            return $default;
+        }
+
+        if (preg_match('#^//#', $candidate)) {
+            return $default;
+        }
+
+        return $candidate;
+    }
+}
+
+if (!function_exists('musky_local_login_identity_candidates')) {
+    function musky_local_login_identity_candidates(string $username, array $legacyUser = []): array
+    {
+        $username = trim($username);
+        $candidates = [];
+
+        $legacyEmail = strtolower(trim((string)($legacyUser['email'] ?? '')));
+        if ($legacyEmail !== '') {
+            $candidates[] = $legacyEmail;
+        }
+
+        foreach (musky_identity_username_lookup_emails($username) as $candidate) {
+            $candidate = strtolower(trim((string)$candidate));
+            if ($candidate !== '') {
+                $candidates[] = $candidate;
+            }
+        }
+
+        if ($username !== '') {
+            $candidates[] = $username;
+        }
+
+        return array_values(array_unique($candidates));
+    }
+}
+
+if (!function_exists('musky_local_login_fetch_user_row')) {
+    function musky_local_login_fetch_user_row(PDO $pdo, string $identity): ?array
+    {
+        $identity = trim($identity);
+        if ($identity === '') {
+            return null;
+        }
+
+        $stmt = $pdo->prepare("SELECT * FROM musky_users WHERE LOWER(email) = LOWER(?) LIMIT 1");
+        $stmt->execute([$identity]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return is_array($row) ? $row : null;
+    }
+}
+
+if (!function_exists('musky_local_login_resolve_identity')) {
+    function musky_local_login_resolve_identity(PDO $pdo, string $username, array $legacyUser = []): array
+    {
+        $candidates = musky_local_login_identity_candidates($username, $legacyUser);
+
+        foreach ($candidates as $candidate) {
+            $row = musky_local_login_fetch_user_row($pdo, $candidate);
+            if (is_array($row)) {
+                return [
+                    'identity' => (string)($row['email'] ?? $candidate),
+                    'row' => $row,
+                ];
+            }
+        }
+
+        return [
+            'identity' => $candidates[0] ?? trim($username),
+            'row' => null,
+        ];
+    }
+}
+
 $now = date('[Y-m-d H:i:s]');
 $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 $errors = [];
+$returnTarget = musky_safe_return_path($_GET['return'] ?? '/index.php');
 
 $authDir = __DIR__;
 $noLocalFile = "$authDir/.NoLocalUserLogin";
 $maintenanceFile = "$authDir/.Maintenance";
+$maintenanceDbFlag = musky_nora_maintenance_mode_enabled('LOGIN_GATE');
 
 // -----------------------------------------------------------------------------
 // Handle Maintenance Lockout
 // -----------------------------------------------------------------------------
-if (file_exists($maintenanceFile)) {
+if (file_exists($maintenanceFile) || $maintenanceDbFlag) {
     ?>
     <!DOCTYPE html>
     <html lang="en">
@@ -70,12 +158,10 @@ if (file_exists($maintenanceFile)) {
             .checking { margin-top: 0.5rem; font-size: 0.9rem; color: #ddd; opacity: 0.8; }
         </style>
         <script>
-            // Auto-check for maintenance flag removal every 30 seconds
+            // Reload the page every 30 seconds so either the legacy file flag
+            // or the DB-backed hold can clear without manual action.
             async function checkMaintenance() {
-                try {
-                    const test = await fetch('./.Maintenance?nocache=' + Date.now(), { method: 'HEAD', cache: 'no-store' });
-                    if (test.status === 404) { window.location.reload(); }
-                } catch (e) { console.log("Maintenance check failed:", e); }
+                window.location.reload();
             }
             setInterval(checkMaintenance, 30000);
         </script>
@@ -94,6 +180,11 @@ if (file_exists($maintenanceFile)) {
     exit;
 }
 
+if (musky_first_time_access_required()) {
+    header('Location: /setup/first-time-access.php?return=' . urlencode($returnTarget));
+    exit;
+}
+
 // -----------------------------------------------------------------------------
 // Handle session-expired message
 // -----------------------------------------------------------------------------
@@ -103,11 +194,19 @@ if (isset($_GET['expired']) && $_GET['expired'] == '1') {
 }
 
 // -----------------------------------------------------------------------------
-// Determine if local DB is available or blocked
+// Determine if local-login store is available or blocked
 // -----------------------------------------------------------------------------
-$db_available = isset($SQLITE_PATH) && file_exists($SQLITE_PATH);
+$authStore = musky_user_store_primary_pdo();
+$authStoreBackend = musky_user_store_backend_name($authStore);
+
+if ($authStoreBackend === 'mysql') {
+    musky_user_mysql_sync_all_from_sqlite();
+}
+
+$db_available = $authStore instanceof PDO
+    && musky_user_store_has_table($authStore, 'users')
+    && musky_user_store_has_column($authStore, 'users', 'password');
 $local_login_disabled = file_exists($noLocalFile);
-$dbPath = $db_available ? $SQLITE_PATH : null;
 
 // -----------------------------------------------------------------------------
 // Authentication logic
@@ -117,16 +216,7 @@ if ($db_available && !$local_login_disabled && $_SERVER['REQUEST_METHOD'] === 'P
     $password = $_POST['password'] ?? '';
 
     try {
-        $pdo = new PDO("sqlite:$dbPath");
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-        $stmt = $pdo->query("PRAGMA table_info(users)");
-        $columns = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        $columnNames = array_column($columns, 'name');
-        if (!in_array('password', $columnNames)) {
-            $errors[] = "❌ DB missing 'password' column.";
-            throw new Exception("Missing 'password' column.");
-        }
+        $pdo = $authStore;
 
         $stmt = $pdo->prepare("SELECT * FROM users WHERE username = :username LIMIT 1");
         $stmt->execute([':username' => $username]);
@@ -139,28 +229,75 @@ if ($db_available && !$local_login_disabled && $_SERVER['REQUEST_METHOD'] === 'P
             $_SESSION['last_active'] = time();
             $_SESSION['was_logged'] = true;
 
-            $check = $pdo->prepare("SELECT * FROM musky_users WHERE email = ?");
-            $check->execute([$username]);
-            $existing = $check->fetch(PDO::FETCH_ASSOC);
+            $resolved = musky_local_login_resolve_identity($pdo, $username, is_array($user) ? $user : []);
+            $resolvedIdentity = trim((string)($resolved['identity'] ?? $username));
+            $musky = is_array($resolved['row'] ?? null) ? $resolved['row'] : null;
 
-            if (!$existing) {
-                $insert = $pdo->prepare("INSERT INTO musky_users (email, role, building, allowed_tools) VALUES (?, 'legacy', 'unknown', 'YOUR_DEVICE')");
-                $insert->execute([$username]);
+            if ($musky === null) {
+                $now = date('Y-m-d H:i:s');
+                $defaultTheme = trim((string)($user['theme'] ?? 'light-mode')) ?: 'light-mode';
+                $insert = $pdo->prepare("
+                    INSERT INTO musky_users (
+                        email, role, building, allowed_tools, theme,
+                        created_at, updated_at, source_db, last_synced_at
+                    )
+                    VALUES (?, 'legacy', 'unknown', 'YOUR_DEVICE', ?, ?, ?, 'legacy', ?)
+                ");
+                $insert->execute([$resolvedIdentity, $defaultTheme, $now, $now, $now]);
+                $musky = musky_local_login_fetch_user_row($pdo, $resolvedIdentity);
             }
 
-            $load = $pdo->prepare("SELECT * FROM musky_users WHERE email = ?");
-            $load->execute([$username]);
-            $musky = $load->fetch(PDO::FETCH_ASSOC);
+            try {
+                if (musky_user_store_has_column($pdo, 'musky_users', 'last_login_at')) {
+                    $touch = $pdo->prepare("UPDATE musky_users SET last_login_at = CURRENT_TIMESTAMP WHERE LOWER(email) = LOWER(?)");
+                    $touch->execute([$resolvedIdentity]);
+                }
+            } catch (Throwable $e) {
+                // Leave legacy login untouched if this convenience timestamp
+                // cannot be updated.
+            }
+
+            $musky = is_array($musky) ? $musky : musky_local_login_fetch_user_row($pdo, $resolvedIdentity);
+            if (!is_array($musky)) {
+                $musky = [
+                    'email' => $resolvedIdentity,
+                    'role' => 'legacy',
+                    'building' => 'unknown',
+                    'allowed_tools' => 'YOUR_DEVICE',
+                    'theme' => trim((string)($user['theme'] ?? 'light-mode')) ?: 'light-mode',
+                ];
+            }
+            $musky['username'] = $username;
             $_SESSION['musky_user'] = $musky;
 
-            $redirect = $_GET['return'] ?? '/musky/';
+            // Keep the fallback SQLite store alive when MySQL is primary, and
+            // keep the MariaDB mirror alive when SQLite is primary.
+            $muskySyncRow = $musky;
+            unset($muskySyncRow['username']);
+            if ($authStoreBackend === 'mysql') {
+                musky_user_sqlite_upsert_oldskool_user_row($user);
+                if (is_array($muskySyncRow)) {
+                    musky_user_sqlite_upsert_user_row($muskySyncRow);
+                }
+            } else {
+                musky_user_mysql_sync_oldskool_user_row($user);
+                musky_user_mysql_sync_by_email($resolvedIdentity, $muskySyncRow ?: null);
+            }
+
+            musky_activity_log_login('local', [
+                'login_type' => 'local',
+                'redirect'   => $returnTarget,
+            ]);
+
+            $redirect = $returnTarget;
             header("Location: $redirect");
             exit;
         } else {
             $errors[] = "Invalid credentials.";
         }
     } catch (Exception $e) {
-        $errors[] = "Internal error: " . $e->getMessage();
+        error_log('[auth/login] Local login failed: ' . $e->getMessage());
+        $errors[] = "Internal error. Please try again or use Google login.";
     }
 }
 ?>
@@ -419,7 +556,7 @@ if ($db_available && !$local_login_disabled && $_SERVER['REQUEST_METHOD'] === 'P
 
 <div class="google-login">
     <p>or</p>
-    <a href="/SSO/Google/login.php"
+    <a href="/SSO/Google/login.php?return=<?= urlencode($returnTarget) ?>"
        class="google-button <?= (!$db_available || $local_login_disabled) ? 'google-pulse' : '' ?>">
        Login with Google
     </a>

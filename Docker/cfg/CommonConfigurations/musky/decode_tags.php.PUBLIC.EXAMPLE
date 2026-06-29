@@ -1,0 +1,36 @@
+<?php
+// decode_tags.php.PUBLIC.EXAMPLE
+//
+// Public-safe example tag translation map for Docker packaging.
+// Copy or rename this file to decode_tags.php and then replace the
+// sample tags/labels with values that match your own environment.
+
+$tagTranslations = [
+    'STUDENT' => 'Student-assigned device',
+    'STAFF' => 'Staff-assigned device',
+    'TEACHER' => 'Teacher-assigned device',
+    'ELEM-LOANER' => 'Elementary loaner pool device',
+    'MIDDLE-LOANER' => 'Middle school loaner pool device',
+    'HIGH-LOANER' => 'High school loaner pool device',
+    'IN-STORAGE' => 'Device is currently in storage',
+    'REPAIR' => 'Device is out for repair',
+    'RETIRED' => 'Device has been retired',
+    'CAMERA-ALLOWED' => 'Camera access is allowed on this device',
+];
+
+if (!empty($parsedData['TAGS'])) {
+    echo "<h3>Device Tags:</h3><ul>";
+
+    $tagList = explode(',', $parsedData['TAGS']);
+    foreach ($tagList as $tag) {
+        $tag = trim($tag);
+        if (isset($tagTranslations[$tag])) {
+            echo "<li>📌" . htmlspecialchars($tagTranslations[$tag]) . "</li>";
+        } else {
+            echo "<li>📌Unknown Tag: " . htmlspecialchars($tag) . "</li>";
+        }
+    }
+
+    echo "</ul>";
+}
+?>

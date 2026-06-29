@@ -1,0 +1,41 @@
+<?php
+// =====================================================================
+// loaner_constants.php.PUBLIC.EXAMPLE
+// ---------------------------------------------------------------------
+// Public-safe example constants for the Loaner Device Management System
+// =====================================================================
+
+// Safely define CAMPUS_IPS if not already defined.
+// Replace these sample addresses with IPs or gateways that indicate
+// a device is currently inside your own trusted network.
+if (!defined('CAMPUS_IPS')) {
+    define('CAMPUS_IPS', [
+        '192.168.1.1',
+        '10.0.0.1',
+        '10.10.10.1',
+        '172.16.0.1',
+    ]);
+}
+
+/**
+ * LOANER_POOLS
+ * ------------------------------------------------------------------
+ * Defines the available Loaner device pools.
+ *
+ * - Key = short code shown in the UI
+ * - Value = tag or label used by your backend/device data
+ *
+ * Copy this file to loaner_constants.php and replace the sample
+ * entries below with pool names and tags that match your deployment.
+ */
+if (!defined('LOANER_POOLS')) {
+    define('LOANER_POOLS', [
+        'EAST' => 'EAST-LOANER',
+        'WEST' => 'WEST-LOANER',
+        'MIDDLE' => 'MIDDLE-LOANER',
+        'HIGH' => 'HIGH-LOANER',
+        'DISTRICT-IT' => 'DISTRICT-LOANER',
+        'ART-CART' => 'ART-CART-LOANER',
+    ]);
+}
+?>

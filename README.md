@@ -1,222 +1,280 @@
-<img src="https://github.com/JCSmillie/Musky-ShakeNBakeWeb-PUBLIC/blob/main/mascot.png?raw=true" alt="Musky our Fearless Mascot." width="200"/>
+<img src="https://github.com/JCSmillie/Musky-ShakeNBakeWeb-PUBLIC/blob/main/mascot.png?raw=true" alt="Musky our fearless mascot." width="200"/>
 
 # What is Musky?
-Musky is a home grown tool created to support our student help desk and faculty who support iPads. In its current configuration the goal is to provide a tool that lets our help desk students experience "Quick Wins" when helping end users with technology problems.  Finding iPads is one of the most common reasons people come to the help desk.  Musky has an extremely easy Lost device ability.  
 
-Musky went live at Gateway School District for production use in April 2025 almost one year from when the first line of code was written to see if I could do any of this.  Its actively deployed still today and will be utilized by Faculty next year in addition to our Help Desk kids.
+Musky is a home-grown support tool built to help school IT staff, help desk
+students, and other front-line support people work iPad and device issues
+quickly without needing to live inside every backend system all day.
 
+The project started as a practical answer to real queue pain:
 
-# Why was Musky Created?
-Winter 2024 we noticed that there was a significant delay between when ASM learned of new students and when those students would be available to assign a new device to.  So effectly, at the time by hand, you would do the following:
-1. Go to IncidentIQ (ticket system,) lookup the student who needs the device, assign device in IIQ.
-2. Go to Mosyle.  Assign device to student there.  If student is missing wait 12-24hrs for student to show up.
+1. assign or check a device in the ticket/workflow system
+2. jump to Mosyle to finish the device-side work
+3. get blocked when the user or device data is not ready yet
 
-As you can imagine this creates backlog because if the student doesn't exist in Mosyle then the device can't be assigned completely.  To address this issue I wrote a very simple cgi script.  This script not only automated the two steps noted above but also makes sure the end user DOES EXIST in Mosyle and if not will create them on the fly and then assign the iPad.  Again I can't stress now simple this script was.  Simple ZSH.  You can find this script in the Examples directory as reference.  Effectively I put this on my server and protected it with an htaccess file.  As the server already had MOSBasic installed it just works.  So with these in place I could go to say http://localhost/assign.cgi?**SERIALNUMBER** which would trigger the script and assign the device.  No worry if account exists.  As long as its proper in IncidentIQ it will be proper in Mosyle.  With this working I also wrote wipeRTS.cgi (also in the Example directory) which is called the same way but uses Return to Service mode to wipe the iPad and put it back to Limbo (unassigned but waiting) state.  Musky is the next interation of those scripts.
+The earliest version was just a couple of shell-driven web helpers. Musky is
+the larger follow-up: a web front end that can read live device state, kick off
+trusted backend workflows, and present the result in a way that is useful to
+staff and approachable for student helpers.
 
-<!-- NOTE --> Both assign.cgi and wipeRTS.cgi are in the Example directory.  They are definately NOT drop in and use as they depend on MOSBasic and some other custom stuff not published.  I list these files only to show you how easily this can all be done.
+Musky went live at Gateway School District in April 2025. The current tree is
+best described as a rolling `0.8.x` beta. It is very real, very used, and still
+being actively hardened and cleaned up as it grows.
 
-## 🔧 Purpose
+## Current status
 
-Musky bridges the gap between complex backend tools and fast-paced, front-line support needs. It's designed for IT staff and field technicians to:
+- Current repo version: `0.8.1.1`
+- Primary deployment style today: LAN or tightly restricted internal access
+- Current auth model: Google SSO plus an optional legacy/local fallback path
+- Current data/action backbone: Nora-backed lookups, errands, and admin tools
 
-- Instantly locate and triage devices
-- View assignment, check-in, IP beat, and tag metadata
-- Trigger device actions (Wipe, Lost Mode, Restart, etc.)
-- Integrate live data from the Mist API for wireless positioning
+Musky is no longer just "a page to find an iPad." It is now a small suite of
+support surfaces around device lookup, classroom context, loaner visibility,
+charge workflows, inventory, and admin diagnostics.
 
----
+## What Musky does now
 
-## 🧱 What Musky Is *Not*
+### Device support
 
-- It is *not* another abstract MDM UI.
-- It is *not* meant to replace IT — it's a guided, opinionated front-end to known-good workflows.
-- It is *not* interested in IIQ or other systems changing your data. Musky reads, acts, logs — but it doesn't allow your data to be silently altered behind the scenes.
+- `web/DeviceManager/index.php`
+  - Nora-first asset-tag lookup flow
+  - refresh via `INV_LOOKUP` errands
+  - wipe, lost mode, sound, location, reboot, and related action launchers
+  - ticket/problem intake entrypoints
+- `web/DeviceManager/MyDevices.php`
+  - self-service "devices assigned to me" view
+- `web/public/DeviceVitals.php`
+  - public serial-based facts-only view with anonymous-safe device vitals
+  - authenticated users get a richer sidebar/action experience
 
----
-## 🧭 Philosophy and Origin
+### Classroom and loaner views
 
-Musky was born out of necessity — built during a time of personal hardship and institutional challenge. The goal was to empower not only IT staff, but also secretaries and student help desk members who may not know every detail of MDMs, network topology, or ticketing logic — but *still need to take action confidently and quickly*.
+- `web/ClassExplorer/ClassExplorer.php`
+  - classroom-focused view for seeing devices tied to classes/teachers
+- `web/LoanerExplorer/LoanerExplorer.php`
+  - Loaner Explorer V2
+  - NORA-backed pool/device view
+  - replaces the older `web/Loaners/` and `web/loaner_constants.php` model
 
-It simplifies workflows, decodes obscure tags, and provides real-world guidance in clear, actionable terms — giving a 6th-grade help desk student the tools to succeed on their first ticket and giving building secretaries the ability to deploy or recover iPads without having to know every backend system.
+### Admin and operational tooling
 
-This project emerged from real-world constraints and was battle-tested during moments when downtime wasn't an option — including full reliance on it while its creator was bedside caring for a parent. Its design reflects this: resilient, direct, and human-centered.
+- `web/admin/NoraWeb.Dashboard.php`
+  - Nora queue and system status dashboard
+- `web/admin/NoraWeb.ErrandsList.php`
+  - errands monitor / console
+- `web/admin/NoraWeb.ConfigStore.php`
+  - DB-backed active config management
+- `web/admin/NoraWeb.TagDecode.php`
+  - tag decoding admin UI
+- `web/admin/MuskyActivityDashboard.php`
+  - Musky usage and activity monitoring
+- `web/Inventory/index.php`
+  - admin inventory dashboard
 
----
+### PANDA and charge workflows
 
-## How was Musky Created?
-So not to toot my own horn too much but I'm pretty decent at shell languages.  I've been writing shell scripts for a very long time, however I have absolutely no PHP game.  To fill in my gaps I have used ChatGPT to create the majority of the PHP code you see.  All the shell scripts depended on as well as MOSBasic have no ChatGPT in them.  Back before the internet was so vast I was into CircleMUDs.  When it came time to build our own MUD I learned what I needed to know about C+ by looking at other people's code (posted to the CircleMUD mailing list,) hack it to do something different, and keep hacking at it until it did what I wanted it to do.  I feel this is pretty much the same thing.  I tell ChatGPT how my script works, how I want it interacted with, and it puts out the code.  I use GitHub Desktop so I can easily compare changes to understnad what changed and why.  Over time of doing this I'm starting to pickup **SOME** PHP knowledge and even correcting my own errors as we go along but it will be a long time before I can just write some PHP.  That being said I see nothing wrong with using AI to code as long as you proof read and try to understand what it happening to the best of your knowledge.  Working with ChatGPT is like having a conversation with an amazingly smart person who has no real world skill set and often makes simple mistakes.  You have to read along and catch those mistakes, but the code is completely usable.
+- `web/PANDA/`
+  - charge queue
+  - charge history
+  - coverage rules
+  - charge decisions and follow-through actions
 
-# Install:
+### User/session features
 
-## Prerequisits:
-* Linux server with Apache to run MOSBasic and Musky out of.  
-* MOSBasic installed, configured, and tested to be working.
+- Google SSO support
+- MUSKY session enforcement through `web/check_access.php`
+- theme/user preference panes under `web/Preferences/`
+- per-user activity tracking and login/page/action logging
 
-## 🧠 Core Dependencies
+### Optional enrichment
 
-- **MOSBasic**: ZSH-based CLI for Mosyle API interaction
-- **IncidentIQ Webhooks**: Used for triggering real-time assignment workflows
-- **Mist API**: Optional, but provides powerful enrichment for device location
-- **Apache/PHP**: Web server base, CGI for secure script execution
+- Mist/Wi-Fi enrichment helpers and data-map tooling under:
+  - `Functions/Utility/`
+  - `web/DataSources/`
 
-## Instructions:
-- Install MOSBasic on a Linux running machine.  I run CentOS7 and CentOS9 Stream personally.
-- Test MOSBasic.  From the command line dump your Mosyle data.  Now try 'mosbasic info <assettag>'.  If you get return data you should be in business.
-- Clone the MUSKY repo your your web server.
-- Create symlinks to serve the content:
-  - Create a symlink from the web folder (in this project) to your web server space so it can be hosted.  So probably a link to /var/www/htdocs/Musky woud be good again if your CentOS.
-  - Create a symlink from the functions folder (in this project) to /var/www/functions.
-- Consult the MUSKY security guide for notes on creating a general .htaccess file to protect your install.
-- Edit your Apache config to allow access to these directories.
- ```
- <Directory "<MUSKY-Repo>/MuskyFunctions/">
-     # Allow open access:
-     Require all granted
- </Directory>
- <Directory "<MOSBAsicRepo>/MOSBasic/">
-     # Allow open access:
-     Require all granted
-     Options Indexes
- </Directory>
-```
+## What changed since the older 2025 README snapshot
 
-## Musky Configs to Edit:
-Files to Edit to make this work in your environment:
-The following files must be edited for your environment.  Files are heavily commented:
-* <MUSKY-Repo>/web/DeviceManager/decode_tags.php <-List of any notable tags (as they appear in Mosyle) and what should be displayed if that tag is found.
-* <MUSKY-Repo>/web/config.php <-Base configuration.  This is where you tell Musky where to find your MOSBasic install, local locations for Musky's Support scripts, log locations, etc.
-* <MUSKY-Repo>/web/loaner_constants.php <-List of Loaner Pools to be displayed and what to show those loaner pools name as.  See understanding Loaners.
-* <MUSKY-Repo>/web/mascot.png & musky_favicon.png <-Musky Themed graphics.  You can replace these, but I ask you don't mess with the about.php file.
-  
-Open up your browser to whereeveryouputit/index.php and away you go.
+The September 2025-era README was behind the actual code. Since then, Musky
+picked up a good chunk of new surface area and cleanup work:
 
+- Nora-first lookup/refresh flow is now the normal device lookup model
+- Loaner Explorer V2 replaced the older loaner manager approach
+- Class Explorer is live
+- My Devices and public DeviceVitals are both real pages now
+- PANDA expanded into a fuller charge workflow area
+- admin dashboards now include Nora status, errands, activity, inventory, and
+  config-store management
+- tag decode mappings moved into the Nora config-store model
+- root `musky_config.json` became the shared runtime config source for Musky
+- Google SSO wiring and documentation were cleaned up
+- large security-hardening passes were completed around CSRF, helper endpoints,
+  stale app leftovers, and public/private surface separation
 
-## SECURING ACCESS:
-Musky pages support .htaccess restrictions and is the recommended way to set this up.  Onsite (and in various places in the code comments) you can see I have our own 2FA solution tied in there.  That documentaion will not be provided at this time.  Search for apache .htaccess; you should find a ton of info.
+## Why Musky exists
 
-### 🔒 Auth / Security
+Musky exists to turn "I know the right backend tool, but this will still take
+too many clicks and too much context" into something faster and safer.
 
-- All actions are restricted behind web authentication (`check_access.php`)
-- Device control logs are saved with timestamp, IP, and username
-- Optional user theme preferences stored in SQLite
+The project is opinionated on purpose. It is not trying to be a generic MDM
+replacement. It is trying to make common school support workflows easier for
+the people who actually have to do them at speed.
 
-## 📦 Folder Structure
+## What Musky is not
 
-```
-DeviceManager/
-├── index.php                # Main device lookup page
-├── decode_tags.php         # Human-friendly tag translations
-├── load_modules.php        # Lists module buttons
-├── run_modules.php         # Executes selected module
-├── Modules/
-│   └── *.php               # Optional 3rd party tools
-├── DataSources/            # Mist API JSON dumps & enrichment maps
-│   ├── mac_to_apname_map.json
-│   ├── bssid_to_apname_map.json
-│   ├── client_lastseen_map.json
-│   └── ...
-```
+- It is not a full replacement for Mosyle, Nora, IncidentIQ, or your SIS.
+- It is not a polished internet-scale product yet.
+- It is not a "point it at the public internet and forget about it" app.
 
----
+For now, the sensible deployment posture is still:
 
-## 🧪 Debugging and Reporting
-At any time while accessing the interface if a problem is found click the PROBLEM button left corner and submit the issue.  A screenshot of how Musky appeared at the time of submission will also be taken.
+- keep Musky behind normal org auth
+- prefer LAN or tightly restricted network exposure
+- keep Nora/API surfaces even more restricted where possible
 
-- **Debug** pane reveals the last shell command and output
-- **PROBLEM** button allows the user to submit screenshots and issues with metadata for triage
+## Core dependencies
 
----
+Musky is a web app, but it leans on a few surrounding systems:
 
-# Pages Available:
-This is the landing page.  Not much to look at:
+- PHP / Apache-style web hosting for the `web/` tree
+- Nora data and errands for most current lookup/refresh/action flows
+- Mosyle for device actions and status
+- optional Google SSO
+- optional Mist data enrichment
+- optional PANDA / inventory / local district-specific integrations
 
-<img src="https://github.com/JCSmillie/Musky-ShakeNBakeWeb-PUBLIC/blob/main/Imagery/main.png" alt="Landing Page" width="600"/>
+The preferred container path now is:
 
-## DeviceManager Page:
-<img src="https://github.com/JCSmillie/Musky-ShakeNBakeWeb-PUBLIC/blob/main/Imagery/DeviceManager.png" alt="Device Manager View." width="600"/>
-This is the core of what will become the Musky suite.  This page (**PROJECT**/Web/DeviceManger/index.php) is where you will look up devices (by asset tag as noted in your Mosyle install) and perform most actions.  Post lookup the buttons available are:
-* Wipe Device -> Tell iPad to use RTS to wipe and return to Limbo state.
-* Enable Lost Mode -> Eanble lost mode.  
-* Play Sound -> Only appears when device is in Lost mode.
-* Show Location -> Only appears when device is in lost mode  Query's location and opens a popup in Apple Maps to show location.
-* Assign Device -> Assign iPad.  This button is disabled in the Public version at this time, but on the road Map.
-* Restart iPad -> Restart iPad (unavailable if device is in Lost Mode)
-* Look Up Again -> Rerun query in Mosyle
-* DEBUG -> Shows all the CSV and other output data.  
+- `Docs/README.DockerQuickStart.md`
 
-And in the bottom left corner the PROBLEM button for reporting issues.  This button is special in that when clicked a popup will appear asking you the issue.  You type and submit.  The submission is then emailed to the address listed in config.php with a screenshot of how Musky was as of the report.  
+There is also older Docker/Devilbox reference material in:
 
-## ⚠️ STOLEN Mode
+- `Docker/README.md`
 
-If a decoded tag equals `STOLEN`, Musky enforces a lockdown:
+## Deployment notes
 
-- All sidebar buttons are **disabled**
-- 3rd Party Modules section is hidden
-- A loud banner reads:  
-  **“CONTACT MR. SMILLIE ASAP!!!!”**
+Expose the `web/` directory as the app's document root. Do not expose the repo
+root directly.
 
-This behavior is hardcoded for immediate attention and loss recovery workflow compliance.
+Important practical rule:
 
+- `web/` is the web surface
+- `Functions/`, config files, docs, and other repo internals should stay out of
+  direct public web access
 
-### Loaners Page
-<img src="https://github.com/JCSmillie/Musky-ShakeNBakeWeb-PUBLIC/blob/main/Imagery/LoanerView.png" alt="Loaner Device View." width="600"/>
-This page allows group actions.  Mainly used to get a list of preselected groups and then you can click the assset tag to get more info on that particular device:  Buttons available are:
-* Mass Wipe Selected
-* Verify Assignment  <-Disabled.  Future.
-* Message User <-Disabled.  Future.
-* Reload Data
+That is one of the bigger places where the older README had drifted. Musky now
+expects relative includes from `web/` back into `../Functions/`; it does not
+need `Functions/` published as its own open web directory.
 
-### Understanding "Loaners":
-In our school district we have pool of iPads which are loaned out if a student has a breakage or has forgotten their device at home.  These "Loaner" iPads are setup the same way as everything else here.  They are kept in a cabinet in each Elementary, in limbo state, until needed.  We do not use Shared iPad mode for these.
+## Base install outline
 
-In Mosyle we define our loaner devices with a tag.  That tag is what we "Search" for when we utilize the Loaners page.  So for example all the Loaners at Ramsey Elementary have the tag RAM-LOANER.  So if we would go to the loaner page and select "Ramsey Loaner" from the pull down menu its going to search for that tag and return device that has it.  This results in a nice list explaining pretty much where the loaners are: IE in the cabinet, on loan, or broken.  
+1. Set up the web host or container environment.
+2. Make sure Nora, Mosyle credentials, and any local dependencies are ready.
+3. Deploy the repo so the app serves from `web/`.
+4. Review and fill in the private runtime config files.
+5. Review access restrictions before exposing the app to real users.
 
-I also have a cart of iPads deployed in Art at the High School.  It has a tag.  It too can be visited/accessed through the loaner page since we reference by tag.  To add I just edit **PROJECT**/web/loaner_constants.php and add the additional tag info.
+If you want a container-oriented bootstrap path, start with:
 
-When looking at the loaner page you can see that the asset tags are clickable.  Doing so will open a new page with Musky Device Manager showing that particular iPad.
+- `Docs/README.DockerQuickStart.md`
 
+## Config files to review
 
-## 3rd Party Modules:
-In Device Manager there is a section titled 3rd Party Modules.  Placing a PHP file in **PROJECT**/Web/DeviceManger/Modules will allow that code to appear in this window.  Currently in this directory all of the included script names end in .DISABLED which tells the page not to load the module.  3rd Party modules when launched have full access to any of the data we looked up in Musky prior to running the 3rd party module.  
+### Root Musky runtime config
 
-# Whats not working/Road Map:
-* Theme selection is suppose to follow users page to page, but doesn't.  Totally a bug but something I have to fix.
-* Slack Settings are in config.php but I still have to revisit how thats going to work.
-* Class listings so Teacher can login, see their class (like the Loaners panel) at a glance.
-* 2FA Auth against common systems?
-* Docker Image of MosBASIC and MUSKY together allowing quick deployment.
-* Make Assign Device button work.
-* assign.cgi and wipeRTS.cgi need rewritten to be more graphical.
-* Expanded/additional logging.
-* Write 3rd party Module guide
-* DOCUMENT TONS OF STUFF.
-- Apple Sign-in or internal SSO
-- Classroom View Panel for teachers
-- Device Status Groups (e.g., In Storage, Needs Update, etc.)
-- Configurable user themes and homepage preferences
-- Branded install mode for other school districts
+- `musky_config.json`
+- `musky_config.json.PUBLIC.TEMPLATE`
+- `Docs/README.MuskyConfig.md`
 
+This is the main Musky runtime config source now. It covers things such as:
 
+- session timeout
+- base file paths
+- debug/temp paths
+- Google SSO settings
+- allowed identity domains and domain-role mapping
+- Nora base URL hints used by helper calls
+- Mosyle runtime path hints
 
+### Nora / backend config
 
+- `nora_config.json`
 
-## 📅 Timeline and Impact
+This is still deployment-specific and is used for Nora/MariaDB/API-related
+settings used by Musky's Nora-backed features.
 
-- **2020:** Loaner control systems evolved during the district-wide Mosyle rollout and pandemic response
-- **2023:** Health and staffing crises pushed the need for web-based automation
-- **2024:** `assign.cgi` and `wipeit.cgi` introduced, enabling true loaner automation and webhook integration
-- **2025:** Musky formalized into its current web interface, with Mist integration, tag decoding, and student-friendly UI
+### Other branding/content knobs
 
----
-## 🏁 Release 1 Goals
+- `web/mascot.png`
+- `web/musky_favicon.png`
 
-- ✅ Basic authentication (IT, HDK students, secretaries)
-- ✅ Basic device control (Lost Mode, Wipe, Assign, etc.)
-- ✅ Loaner Management Panel
-- ✅ “Anyone Pane” (facts-only view via serial number)
-- ✅ Initial landing page (with goal of dashboard-style insights)
-- ✅ General documentation
+### DB-backed admin-managed config
 
----
-## 📞 Contact
-This project is maintained by Jesse C. Smillie.  
+- tag decode mappings are managed from:
+  - `web/admin/NoraWeb.TagDecode.php`
+- active Nora/Mosyle/config-store values are managed from:
+  - `web/admin/NoraWeb.ConfigStore.php`
+
+## Security notes
+
+The current app flow is built around:
+
+- `web/check_access.php`
+- MUSKY session enforcement
+- Google SSO support
+- scoped CSRF protections for write actions
+- helper endpoint hardening work completed during the 2026 cleanup passes
+
+Start here for the current security posture:
+
+- `web/README-MUSKY-SECURITY.md`
+- `Docs/README.NoraAPI.SecurityAudit.md`
+
+Musky can still sit behind `.htaccess`, reverse-proxy restrictions, or other
+upstream network controls, and that is still recommended.
+
+## Main pages
+
+- `web/index.php` - Musky hub / launcher
+- `web/DeviceManager/index.php` - main device support page
+- `web/DeviceManager/MyDevices.php` - devices assigned to current user
+- `web/public/DeviceVitals.php` - public-safe serial lookup page
+- `web/LoanerExplorer/LoanerExplorer.php` - current loaner view
+- `web/ClassExplorer/ClassExplorer.php` - classroom device view
+- `web/PANDA/PANDA_ChargeQueue.php` - PANDA charge queue
+- `web/Preferences/index.php` - user preferences
+
+## Docs worth reading first
+
+- `Docs/index.md`
+- `Docs/README.DeviceManager.md`
+- `Docs/README.Loaners.md`
+- `Docs/README.NoraErrands.MUSKY.md`
+- `Docs/README.MuskyConfig.md`
+- `web/SSO/Google/README.EnableGoogleSSO.md`
+- `Docs/README.DockerQuickStart.md`
+
+## Roadmap / known unfinished edges
+
+Musky is useful today, but it is not "done." A few live themes:
+
+- continued public-release cleanup and de-GSD cleanup
+- more docs
+- more polish around portable install expectations
+- continued Nora/API hardening
+- more cleanup of experimental or superseded paths
+- eventual replacement/modernization of older helper-script workflows
+- future packaging for easier outside-district adoption
+
+## A note on how Musky was built
+
+The original shell-side tooling was written by hand. A large amount of the PHP
+side was built iteratively with ChatGPT assistance and then shaped, corrected,
+and tested in place against real-world workflows.
+
+That is not hidden here because it is part of the project's actual story. This
+repo is the result of a working operator teaching a growing codebase how to do
+real work.
+
+## Contact
+
+This project is maintained by Jesse C. Smillie.

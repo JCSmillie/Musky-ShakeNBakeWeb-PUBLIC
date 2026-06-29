@@ -1,0 +1,62 @@
+services:
+  musky:
+    build:
+      context: .
+      dockerfile: Docker/Dockerfile
+      args:
+        MOSBASIC_REPO: ${MUSKY_MOSBASIC_REPO:-https://github.com/JCSmillie/MOSBasic.git}
+        MOSBASIC_REF: ${MUSKY_MOSBASIC_REF:-main}
+    container_name: musky-app
+    restart: unless-stopped
+    ports:
+      - "${MUSKY_HTTP_PORT_FORWARD:-8088}:80"
+    environment:
+      TZ: ${TZ:-America/New_York}
+      MUSKY_DB_HOST: ${MUSKY_DB_HOST:-host.docker.internal}
+      MUSKY_DB_PORT: ${MUSKY_DB_PORT:-7306}
+      MUSKY_DB_NAME: ${MUSKY_DB_NAME:-nora}
+      MUSKY_DB_USER: ${MUSKY_DB_USER:-nora}
+      MUSKY_DB_PASS: ${MUSKY_DB_PASS:-nora_password}
+      MUSKY_DB_WAIT_ATTEMPTS: ${MUSKY_DB_WAIT_ATTEMPTS:-90}
+      MUSKY_DB_WAIT_SLEEP_SECONDS: ${MUSKY_DB_WAIT_SLEEP_SECONDS:-2}
+      MUSKY_SESSION_TIMEOUT_SECONDS: ${MUSKY_SESSION_TIMEOUT_SECONDS:-1800}
+      MUSKY_DEVICE_MANAGER_ENABLED: ${MUSKY_DEVICE_MANAGER_ENABLED:-1}
+      MUSKY_LOANER_ENABLED: ${MUSKY_LOANER_ENABLED:-0}
+      MUSKY_ALLOWED_EMAIL_DOMAINS: ${MUSKY_ALLOWED_EMAIL_DOMAINS:-example.org,example.net}
+      MUSKY_STAFF_DOMAINS: ${MUSKY_STAFF_DOMAINS:-example.org}
+      MUSKY_STUDENT_DOMAINS: ${MUSKY_STUDENT_DOMAINS:-example.net}
+      MUSKY_HDK_DOMAINS: ${MUSKY_HDK_DOMAINS:-example.net}
+      MUSKY_RESTRICTED_INDIVIDUAL_DOMAINS: ${MUSKY_RESTRICTED_INDIVIDUAL_DOMAINS:-example.net}
+      MUSKY_TEACHER_EMAIL_DOMAIN: ${MUSKY_TEACHER_EMAIL_DOMAIN:-example.org}
+      MUSKY_USERNAME_LOOKUP_DOMAINS: ${MUSKY_USERNAME_LOOKUP_DOMAINS:-example.net,example.org}
+      MUSKY_PROBLEM_REPORT_TO: ${MUSKY_PROBLEM_REPORT_TO:-helpdesk@example.org}
+      MUSKY_EMAIL_SENDER_ADDRESS: ${MUSKY_EMAIL_SENDER_ADDRESS:-noreply@example.org}
+      MUSKY_NORA_API_BASE_URL: ${MUSKY_NORA_API_BASE_URL:-http://127.0.0.1/api/NoraAPI.php?path=}
+      MUSKY_GOOGLE_CLIENT_ID: ${MUSKY_GOOGLE_CLIENT_ID:-}
+      MUSKY_GOOGLE_CLIENT_SECRET: ${MUSKY_GOOGLE_CLIENT_SECRET:-}
+      MUSKY_GOOGLE_REDIRECT_URI: ${MUSKY_GOOGLE_REDIRECT_URI:-http://localhost:8088/SSO/Google/callback.php}
+      MUSKY_GOOGLE_SERVICE_KEYFILE: ${MUSKY_GOOGLE_SERVICE_KEYFILE:-/var/lib/musky/GoogleCreds/musky-service.json}
+      MUSKY_GOOGLE_IMPERSONATE_ADMIN: ${MUSKY_GOOGLE_IMPERSONATE_ADMIN:-admin@example.org}
+      MUSKY_GOOGLE_ALLOWED_DOMAINS: ${MUSKY_GOOGLE_ALLOWED_DOMAINS:-example.org}
+      MUSKY_GOOGLE_ENABLE_DEBUG_LOGS: ${MUSKY_GOOGLE_ENABLE_DEBUG_LOGS:-0}
+      MUSKY_GOOGLE_DEBUG_LOG_DIR: ${MUSKY_GOOGLE_DEBUG_LOG_DIR:-/var/lib/musky/GoogleAuths}
+      MUSKY_GOOGLE_DISABLE_TEMP_DEBUG_FILES: ${MUSKY_GOOGLE_DISABLE_TEMP_DEBUG_FILES:-1}
+      MUSKY_MOSYLE_API_BASE_URL: ${MUSKY_MOSYLE_API_BASE_URL:-https://managerapi.mosyle.com/v2}
+      MUSKY_MOSYLE_API_KEY: ${MUSKY_MOSYLE_API_KEY:-}
+      MUSKY_MOSYLE_API_USERNAME: ${MUSKY_MOSYLE_API_USERNAME:-}
+      MUSKY_MOSYLE_API_PASSWORD: ${MUSKY_MOSYLE_API_PASSWORD:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - musky_logs:/opt/musky/logs
+      - musky_runtime:/var/lib/musky
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1/auth/login.php >/dev/null"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  musky_logs:
+  musky_runtime:

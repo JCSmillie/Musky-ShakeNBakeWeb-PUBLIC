@@ -2,26 +2,6 @@
 // about.php
 // Internal Gateway Device Manager Health and Version Page
 
-include 'config.php';
-
-// ===============================
-// Check Last Problem Report
-// ===============================
-$problemLog = rtrim($LOG_PATH, '/') . '/problem_reports_log.txt';
-$lastProblemReport = 'No reports logged yet.';
-
-if (file_exists($problemLog)) {
-    $lines = file($problemLog, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    if (!empty($lines)) {
-        for ($i = count($lines) - 1; $i >= 0; $i--) {
-            if (strpos($lines[$i], '[') === 0) {
-                $lastProblemReport = $lines[$i];
-                break;
-            }
-        }
-    }
-}
-
 // Detect PHP Version
 $phpVersion = phpversion();
 $serverIP = $_SERVER['SERVER_ADDR'] ?? 'Unknown';
@@ -102,11 +82,6 @@ $serverIP = $_SERVER['SERVER_ADDR'] ?? 'Unknown';
 <tr><td>Version:</td><td>MUSKY Device Manager v1.0</td></tr>
 <tr><td>PHP Version:</td><td><?php echo htmlspecialchars($phpVersion); ?></td></tr>
 <tr><td>Server IP Address:</td><td><?php echo htmlspecialchars($serverIP); ?></td></tr>
-<tr><td>Slack Notifications:</td>
-<td class="<?php echo ($ENABLE_SLACK ? 'status-ok' : 'status-warning'); ?>">
-<?php echo ($ENABLE_SLACK ? 'Enabled' : 'Disabled'); ?>
-</td></tr>
-<tr><td>Last Problem Report:</td><td><?php echo htmlspecialchars($lastProblemReport); ?></td></tr>
 </table>
 <div style="max-width: 600px; margin: 0 auto; text-align: left;">
   <p>The MUSKY Suite/tools/system/etc whatever you would like to call it is dedicated to memory of my Dad, George E. Smillie (1955-2024.)  An avid bowler and Family man my Dad's true passion was food and he enjoyed helping people.  He honed these skills working for G.C. Murphy Co early in his life washing dishes and making hoagies.  With hardwork and great attention to quality he worked his way up the ranks to eventually Manager and gained a reputation through out the company for fixing loss leading restaurants inside G. C. Murphy Co and Murphy Mart stores and making them profitable again.  In 1995 he was transfered back to Western PA where he would find the location where he would open his own restarant, Smillie's Family Restaurant, in Mt. Plesant, PA November 1995.  The restaurant would be the defining family project for years and as George's personal family grew through marriages and grandchildren he kept his nose to the grind stone.  Always trying to make great food at decent prices.  George felt that a family man, like himself, should be able to go out to Dinner with the family and not morgage your house to do it.  Cheap food, but not cheap quaility and still doing things his way up until he passed in April 2024.</p>
@@ -118,6 +93,8 @@ $serverIP = $_SERVER['SERVER_ADDR'] ?? 'Unknown';
   <p>Also to the ones crawling under desks, tracing cables in ceilings, and answering helpdesk tickets while juggling firmware updates — this one's for you.</p>
 
   <p>Your effort matters. Your uptime is seen. And this project exists because of the standards you uphold, even when no one’s watching.</p>
+
+  <p>https://github.com/JCSmillie/Musky-ShakeNBakeWeb-PUBLIC.</p>
 </div>
 
 

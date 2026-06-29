@@ -39,4 +39,4 @@ The script is meant to be run in a browser and prints output in a basic HTML tab
 
 ---
 
-Maintained by the 🦡 Musky-DeviceManager team.
+Maintained by Jesse C Smillie

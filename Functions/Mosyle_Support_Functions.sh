@@ -186,8 +186,3 @@ AssigniPad() {
 		fi
 	fi
 }
-
-DeviceSerialNumber="NNVX2MM41V"
-GetCurrentInfo-ios
-
-

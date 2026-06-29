@@ -39,4 +39,4 @@ Run this script and you'll see the exact structure.
 
 ---
 
-Maintained by the 🦡 Musky-DeviceManager team.
+Maintained by Jesse C. Smillie
