@@ -38,6 +38,7 @@ require_once __DIR__ . '/../bootstrap.php';
 require_once __DIR__ . '/../check_access.php';
 require_once __DIR__ . '/../_tool_guard.php';
 require_once __DIR__ . '/../../Functions/LoggedInUserPrefs.php';
+require_once __DIR__ . '/../../Functions/MuskyConfig.php';
 require_once __DIR__ . '/../../Functions/MuskyUserMariaSync.php';
 require_once __DIR__ . '/../../Functions/MuskyCsrf.php';
 require_once __DIR__ . '/../../Functions/nora_connect.php';
@@ -111,45 +112,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string)($_POST['action'] ?? '') ==
 $loanerFlash = $_SESSION['loaner_explorer_flash'] ?? null;
 unset($_SESSION['loaner_explorer_flash']);
 
-function musky_active_config_value(?PDO $pdo, string $group, string $key): ?string {
-    static $cache = [];
-
-    if (!$pdo instanceof PDO) {
-        return null;
-    }
-
-    $cacheKey = strtoupper($group) . '::' . strtoupper($key);
-    if (array_key_exists($cacheKey, $cache)) {
-        return $cache[$cacheKey];
-    }
-
-    try {
-        $stmt = $pdo->prepare("
-            SELECT ConfigValue
-              FROM nora_config_store
-             WHERE ConfigGroup = ?
-               AND ConfigKey = ?
-               AND IsActive = 1
-             ORDER BY UpdatedAt DESC, ConfigID DESC
-             LIMIT 1
-        ");
-        $stmt->execute([strtoupper($group), strtoupper($key)]);
-        $value = $stmt->fetchColumn();
-        $cache[$cacheKey] = ($value !== false && $value !== null) ? trim((string)$value) : null;
-    } catch (Throwable $e) {
-        $cache[$cacheKey] = null;
-    }
-
-    return $cache[$cacheKey];
-}
-
 $iiqBaseUrlWeb = null;
 try {
     global $pdo;
     if ($pdo instanceof PDO) {
-        $iiqBaseUrlWeb = musky_active_config_value($pdo, 'IIQ', 'BASE_URL_WEB');
+        $iiqBaseUrlWeb = musky_active_config_value('BASE_URL_WEB', 'IIQ', $pdo);
         if (!$iiqBaseUrlWeb) {
-            $iiqApiBase = musky_active_config_value($pdo, 'IIQ', 'BASE_URL');
+            $iiqApiBase = musky_active_config_value('BASE_URL', 'IIQ', $pdo);
             if ($iiqApiBase) {
                 $iiqBaseUrlWeb = preg_replace('#/api(?:/v[0-9.]+)?/?$#i', '', rtrim($iiqApiBase, '/'));
             }
