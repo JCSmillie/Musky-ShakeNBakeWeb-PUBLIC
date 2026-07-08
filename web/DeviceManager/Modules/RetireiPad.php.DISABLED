@@ -16,7 +16,7 @@ What you see here is pretty much just the PHP wrapper for it to work.  The real 
 */
 
 session_start();
-require_once "../../config.php";
+require_once "../../bootstrap.php";
 
 // Logging setup
 function log_event($message) {

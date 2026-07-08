@@ -1,0 +1,10 @@
+# PUBLIC EXAMPLE FILE
+# This is an anonymized example only.
+# Copy or rename this file to .incidentIQ and edit it with your real credentials.
+# For setup expectations and related usage notes, see the MOSBasic documentation
+# in this project before using these values in a live environment.
+
+# Replace all example values below with your real IncidentIQ API details.
+apitoken="REPLACE_WITH_YOUR_INCIDENTIQ_API_TOKEN"
+siteid="REPLACE_WITH_YOUR_INCIDENTIQ_SITE_ID"
+baseurl="https://your-org.incidentiq.com/api/v1.0"

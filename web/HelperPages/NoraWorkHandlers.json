@@ -1,0 +1,6 @@
+{
+  "MOSBasic": ["LOSTMODEON", "LOSTSOUND", "REBOOTME"],
+  "IIQ": ["CREATE"],
+  "Slack": ["ANNOUNCE", "MESSAGE", "ALERT"],
+  "Custom": []
+}

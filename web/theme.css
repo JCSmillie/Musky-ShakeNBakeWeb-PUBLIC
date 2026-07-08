@@ -175,3 +175,239 @@ pre {
 .bounce {
   animation: mascotBounce 0.5s ease;
 }
+
+/* ======================================================================================
+ Everything above this line is OG as of 10-30-25.  Starting with the NoraWeb.ErrandsList.php
+   -JCS 10/30/25
+   =======================================================================================
+*/
+
+/* ============================================================================
+   MUSKY MODE ACCENT PATCH — WVU Blue + Musky Orange + Glow
+   ============================================================================
+*/
+
+body.musky-mode {
+  --musky-accent-orange: #ff8800;
+  --musky-accent-blue: #002855; /* WVU Blue */
+  --musky-accent-bg: #0f1710;
+  --musky-accent-text: #3e3c3c;
+
+  background-color: var(--musky-accent-bg);
+  color: var(--musky-accent-text);
+  font-family: 'Segoe UI', sans-serif;
+}
+
+/* --- Header + Toolbar --- */
+body.musky-mode .sticky-top-toolbar,
+body.musky-mode #topBar,
+body.musky-mode .navbar {
+  background: linear-gradient(90deg, var(--musky-accent-blue) 0%, var(--musky-accent-orange) 100%);
+  color: #fff;
+  border-bottom: 2px solid var(--musky-accent-orange);
+  box-shadow: 0 2px 6px rgba(0, 40, 85, 0.4);
+}
+body.musky-mode .sticky-top-toolbar h3,
+body.musky-mode #topBar h3 {
+  color: #fff;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
+}
+
+/* --- Table --- */
+body.musky-mode table {
+  background-color: #00261a !important;
+  color: #e6f5e6 !important;
+  border-color: #004d33 !important;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+body.musky-mode table thead th {
+  background-color: #003c28 !important;
+  color: #ffffff !important;
+  border-bottom: 2px solid var(--musky-accent-blue);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+body.musky-mode table tbody tr:nth-child(even) {
+  background-color: #002f1d !important;
+}
+body.musky-mode table tbody tr:hover {
+  background-color: #004933 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 6px rgba(255,136,0,0.3);
+}
+
+/* --- Buttons --- */
+body.musky-mode .btn,
+body.musky-mode .action-button,
+body.musky-mode .theme-button,
+body.musky-mode .btn-outline-primary,
+body.musky-mode .btn-outline-secondary {
+  background-color: #002855 !important;
+  color: #ff8800 !important;
+  border-color: #002855 !important;
+  font-weight: 600;
+  transition: all 0.2s ease-in-out;
+}
+body.musky-mode .btn:hover,
+body.musky-mode .action-button:hover,
+body.musky-mode .theme-button:hover {
+  background-color: #ff8800 !important;
+  border-color: #ff8800 !important;
+  color: #ffffff !important;
+}
+
+/* --- Inputs / Search --- */
+body.musky-mode input.form-control,
+body.musky-mode select.form-select,
+body.musky-mode textarea.form-control {
+  background-color: #333;
+  border: 1px solid #555;
+  color: #fff;
+}
+body.musky-mode input.form-control:focus {
+  border-color: #ff8800;
+  box-shadow: 0 0 8px rgba(255,136,0,0.4);
+}
+
+/* --- Scrollbars --- */
+body.musky-mode ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+body.musky-mode ::-webkit-scrollbar-thumb {
+  background: var(--musky-accent-blue);
+  border-radius: 5px;
+}
+body.musky-mode ::-webkit-scrollbar-thumb:hover {
+  background: var(--musky-accent-orange);
+}
+body.musky-mode ::-webkit-scrollbar-track {
+  background: #1c1c1c;
+}
+
+/* --- Glow pulse for activity --- */
+@keyframes muskyGlowPulse {
+  0% { box-shadow: 0 0 4px rgba(255,136,0,0.3); }
+  50% { box-shadow: 0 0 12px rgba(255,136,0,0.6); }
+  100% { box-shadow: 0 0 4px rgba(255,136,0,0.3); }
+}
+body.musky-mode .btn:active,
+body.musky-mode tbody tr:active {
+  animation: muskyGlowPulse 0.6s ease-in-out;
+}
+
+/* ============================================================================
+   GATOR-TIME MODE — Gateway School District Brand Palette
+   Style-guide colors: #000000 and #C5B358
+   ============================================================================
+*/
+
+body.gator-time-mode {
+  --gator-gold: #C5B358;
+  --gator-gold-deep: #a7964a;
+  --gator-black: #000000;
+  --gator-charcoal: #121212;
+  --gator-panel: #171717;
+  --gator-panel-alt: #1f1f1f;
+  --gator-text: #C5B358;
+  --gator-border: rgba(197, 179, 88, 0.34);
+  font-family: 'Segoe UI', sans-serif;
+  background-color: var(--gator-black);
+  color: var(--gator-text);
+}
+
+/* --- Header / Toolbar --- */
+body.gator-time-mode .sticky-top-toolbar,
+body.gator-time-mode #topBar {
+  background: linear-gradient(180deg, var(--gator-charcoal) 0%, var(--gator-black) 100%) !important;
+  color: var(--gator-gold);
+  border-bottom: 2px solid var(--gator-gold);
+  box-shadow: 0 2px 12px rgba(197, 179, 88, 0.18);
+}
+body.gator-time-mode .sticky-top-toolbar h3,
+body.gator-time-mode #topBar h3 {
+  color: var(--gator-gold);
+  text-shadow: none;
+}
+
+/* --- Table --- */
+body.gator-time-mode table {
+  background-color: var(--gator-panel) !important;
+  color: var(--gator-gold) !important;
+  border-color: var(--gator-border) !important;
+}
+body.gator-time-mode table thead th {
+  background: linear-gradient(180deg, var(--gator-panel-alt) 0%, var(--gator-charcoal) 100%) !important;
+  color: var(--gator-gold);
+  border-bottom: 2px solid var(--gator-gold);
+  text-transform: uppercase;
+}
+body.gator-time-mode table tbody tr:nth-child(even) {
+  background-color: #101010 !important;
+}
+body.gator-time-mode table tbody tr:hover {
+  background-color: #252525 !important;
+  color: #ffffff !important;
+}
+
+/* --- Buttons --- */
+body.gator-time-mode .btn,
+body.gator-time-mode .action-button,
+body.gator-time-mode .theme-button {
+  background-color: var(--gator-gold);
+  border-color: var(--gator-gold);
+  color: #000000;
+  font-weight: 700;
+  transition: all 0.2s ease-in-out;
+}
+body.gator-time-mode .btn:hover,
+body.gator-time-mode .action-button:hover,
+body.gator-time-mode .theme-button:hover {
+  background-color: var(--gator-gold-deep);
+  border-color: var(--gator-gold-deep);
+  color: #000000;
+}
+body.gator-time-mode .btn:disabled {
+  background-color: #333333;
+  color: #888888;
+  border-color: #444444;
+}
+
+/* --- Inputs / Search --- */
+body.gator-time-mode input.form-control,
+body.gator-time-mode select.form-select,
+body.gator-time-mode textarea.form-control {
+  background-color: var(--gator-panel-alt);
+  border: 1px solid var(--gator-border);
+  color: var(--gator-gold);
+}
+body.gator-time-mode input.form-control::placeholder {
+  color: rgba(197, 179, 88, 0.72);
+}
+body.gator-time-mode input.form-control:focus {
+  border-color: var(--gator-gold);
+  box-shadow: 0 0 8px rgba(197, 179, 88, 0.28);
+}
+
+/* --- Scrollbars --- */
+body.gator-time-mode ::-webkit-scrollbar {
+  width: 10px;
+}
+body.gator-time-mode ::-webkit-scrollbar-thumb {
+  background: var(--gator-gold);
+  border-radius: 4px;
+}
+body.gator-time-mode ::-webkit-scrollbar-track {
+  background: var(--gator-black);
+}
+
+/* Ensure the column dropdown appears above sticky header */
+.dropdown-menu {
+  z-index: 2000 !important;
+}
+
+/* Here for js support of errand indicator */
+.musky-errand-indicator {
+    transition: background-color 0.3s ease;
+}

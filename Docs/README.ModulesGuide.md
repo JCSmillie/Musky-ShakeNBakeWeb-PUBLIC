@@ -83,4 +83,4 @@ Always keep experimental or dev-only modules `.DISABLED` until tested.
 
 Modules are a lightweight, powerful way to bring your infrastructure together under one pane of glass.
 
-🦡 Brought to you by the Musky-DeviceManager team.
+🦡 Brought to you by Jesse C Smillie

@@ -1,0 +1,10 @@
+# PUBLIC EXAMPLE FILE
+# This is an anonymized example only.
+# Copy or rename this file to .MosyleAPI and edit it with your real credentials.
+# For setup expectations and related usage notes, see the MOSBasic documentation
+# in this project before using these values in a live environment.
+
+# Replace all example values below with your real Mosyle API details.
+MOSYLE_API_key="REPLACE_WITH_YOUR_MOSYLE_API_KEY"
+MOSYLE_API_Username="admin@example.org"
+MOSYLE_API_Password="REPLACE_WITH_YOUR_MOSYLE_PASSWORD"

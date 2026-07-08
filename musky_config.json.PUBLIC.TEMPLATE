@@ -1,0 +1,81 @@
+{
+  "app": {
+    "timezone": "America/New_York"
+  },
+  "session": {
+    "timeout_seconds": 1800,
+    "sqlite_path": ""
+  },
+  "modules": {
+    "device_manager_enabled": true,
+    "loaner_enabled": false
+  },
+  "network": {
+    "campus_ips": [
+      "203.0.113.10"
+    ]
+  },
+  "identity": {
+    "allowed_email_domains": [
+      "example.org",
+      "example.net"
+    ],
+    "staff_domains": [
+      "example.org"
+    ],
+    "student_domains": [
+      "example.net"
+    ],
+    "hdk_domains": [
+      "example.net"
+    ],
+    "restricted_individual_domains": [
+      "example.net"
+    ],
+    "teacher_email_domain": "example.org",
+    "username_lookup_domains": [
+      "example.net",
+      "example.org"
+    ]
+  },
+  "email": {
+    "problem_report_to": "helpdesk@example.org",
+    "sender_address": "noreply@example.org"
+  },
+  "paths": {
+    "mosbasic_binary": "/path/to/mosbasic",
+    "log_dir": "/tmp",
+    "nora_template_dir": "/path/to/nora/Templates",
+    "mosbasic_drop_dir": "/path/to/MOSBasic-Drop"
+  },
+  "nora_api": {
+    "base_url": "https://musky.example.org/api/NoraAPI.php?path="
+  },
+  "mosyle": {
+    "api_base_url": "https://managerapi.mosyle.com/v2",
+    "credentials_file": "/path/to/.MosyleAPI"
+  },
+  "debug": {
+    "nora_api_helper_log": "/tmp/nora_api_musky_helper.log",
+    "loaner_invlookup_log": "/tmp/nora_api_invlookup.log",
+    "loaner_invlookup_status_log": "/tmp/nora_api_invlookup_status.log"
+  },
+  "dev": {
+    "host_suffix": ".local.host",
+    "default_test_user_email": "dev@example.org",
+    "test_sqlite_path": "/tmp/musky_users.sqlite"
+  },
+  "google_sso": {
+    "client_id": "YOUR_GOOGLE_OAUTH_CLIENT_ID.apps.googleusercontent.com",
+    "client_secret": "YOUR_GOOGLE_OAUTH_CLIENT_SECRET",
+    "redirect_uri": "https://musky.example.org/SSO/Google/callback.php",
+    "service_keyfile": "/path/to/musky/GoogleCreds/musky-service.json",
+    "impersonate_admin": "admin@example.org",
+    "allowed_domains": [
+      "example.org"
+    ],
+    "enable_debug_logs": false,
+    "debug_log_dir": "/var/log/musky/GoogleAuths",
+    "disable_temp_debug_files": false
+  }
+}

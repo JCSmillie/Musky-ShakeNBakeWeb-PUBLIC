@@ -1,0 +1,12 @@
+# Docker runtime web-root policy.
+# Local container installs should reach Musky directly without the legacy
+# BasicAuth/IP whitelist layer used on older shared-host deployments.
+
+Options +ExecCGI
+
+<FilesMatch "^(config\.php)$">
+    Require all denied
+</FilesMatch>
+
+ErrorDocument 403 /403.html
+ErrorDocument 404 /404.html
